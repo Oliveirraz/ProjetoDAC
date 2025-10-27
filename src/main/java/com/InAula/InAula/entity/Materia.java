@@ -6,14 +6,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Entity
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @Table(name= "tb_materias")
 public class Materia {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name= "tb_id")
-    private Long idMateria;
+    private UUID idMateria;
     @Column(name= "nome", nullable = false,length = 100)
     private String nome;
 }

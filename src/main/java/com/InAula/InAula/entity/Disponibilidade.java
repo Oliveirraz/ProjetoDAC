@@ -1,4 +1,4 @@
-package com.revisao.revisao.entity;
+package com.InAula.InAula.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalTime;
+import java.util.UUID;
 
 
 @Getter
@@ -17,9 +18,9 @@ import java.time.LocalTime;
 @Table(name= "tb_disponibilidade")
 public class Disponibilidade {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name= "id_disponibilidade")
-    private Long idDisponibilidade;
+    private UUID idDisponibilidade;
     @Column(name = "dia_da_semana")
     @Enumerated(EnumType.STRING)
     private DiaEnum diaDaSemana;
