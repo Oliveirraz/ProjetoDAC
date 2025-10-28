@@ -24,10 +24,6 @@ public class Aula {
     @Column(nullable = false)
     private String local;
 
-    @ManyToOne
-    @JoinColumn(name = "id_professor", nullable = false)
-    private Professor professor;
-
     @ManyToMany
     @JoinTable(
             name = "tb_aulas_alunos",
@@ -37,5 +33,8 @@ public class Aula {
     private List<Aluno> alunos = new ArrayList<>();
 
 
+    @ManyToOne
+    @JoinColumn(name = "id_professor", nullable = false)
+    private Professor professor;
 
 }
