@@ -11,6 +11,6 @@ import java.util.List;
 @Table(name = "tb_alunos")
 public class Aluno extends Usuario{
 
-    @ManyToMany
+    @ManyToMany(mappedBy = "alunos")
     private List<Aula> aulas = new ArrayList<>();
 }
