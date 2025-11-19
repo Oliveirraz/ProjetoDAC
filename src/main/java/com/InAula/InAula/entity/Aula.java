@@ -43,6 +43,4 @@ public class Aula {
     @JoinColumn(name = "id_professor", nullable = false)
     private Professor professor;
 
-
-
 }
