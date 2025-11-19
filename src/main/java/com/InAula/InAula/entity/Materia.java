@@ -6,16 +6,31 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
-@Table(name= "tb_materias")
+@Table(name = "materia")
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class Materia {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name= "tb_id")
-    private UUID idMateria;
-    @Column(name= "nome", nullable = false,length = 100)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, name = "nome", length = 100)
     private String nome;
+
+    @Column(nullable = false, name = "descricao")
+    private String descricao;
+
+    @ManyToMany(mappedBy = "materias")
+    private List<Aluno> alunos = new ArrayList<>();
+
+    @ManyToMany(mappedBy = "materias")
+    private List<Professor> professores = new ArrayList<>();
+
 }
