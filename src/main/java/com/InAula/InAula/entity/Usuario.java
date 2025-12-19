@@ -23,6 +23,10 @@ public abstract class Usuario {
     @Column(nullable = false, name = "email")
     private String email;
 
-    @Column(nullable = false, unique = true, name = "senha")
+    @Column(nullable = false, name = "senha")
     private String senha;
+
+
+    @Column(name = "foto")
+    private String foto;
 }

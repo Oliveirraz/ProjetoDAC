@@ -5,6 +5,7 @@ import com.InAula.InAula.ResponseDTO.DisponibilidadeResponseDTO;
 import com.InAula.InAula.entity.Disponibilidade;
 import org.modelmapper.ModelMapper;
 
+
 public class DisponibilidadeMapper {
 
     private static final ModelMapper modelMapper = new ModelMapper();

@@ -18,7 +18,7 @@ public class Professor extends Usuario {
     @Column(nullable = false, name = "perfil")
     private String perfil;
 
-    @Column(nullable = false, name = "valorHoraAula", precision = 10, scale = 2)
+    @Column(nullable = true, name = "valorHoraAula", precision = 10, scale = 2)
     private BigDecimal valorHoraAula;
 
     @OneToMany(mappedBy = "professor", cascade = CascadeType.ALL, orphanRemoval = true)

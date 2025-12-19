@@ -1,6 +1,7 @@
 package com.InAula.InAula.service.materia.aluno;
 
 import com.InAula.InAula.RequestDTO.AlunoRequestDTO;
+import com.InAula.InAula.RequestDTO.LoginRequestDTO;
 import com.InAula.InAula.ResponseDTO.AlunoResponseDTO;
 import com.InAula.InAula.ResponseDTO.MateriaResponseDTO;
 import com.InAula.InAula.entity.Aluno;
@@ -9,39 +10,80 @@ import com.InAula.InAula.entity.Materia;
 import com.InAula.InAula.exception.ResourceNotFoundException;
 import com.InAula.InAula.repository.AlunoRepository;
 import com.InAula.InAula.repository.MateriaRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.file.*;
+import java.io.IOException;
+
 import java.util.List;
 import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class AlunoService {
 
-    //Cria a injeção de dependencia, o spring me da uma instância pronta ara usar, aqui dentro.
     @Autowired
     private AlunoRepository alunoRepository;
 
     @Autowired
     private MateriaRepository materiaRepository;
 
-    //Esse método recebe meu AlunoRequestDTO que o objeto enviado pelo cliente atraves do insomnia.
-    public AlunoResponseDTO criarAluno(AlunoRequestDTO alunoDTO){
-        Aluno aluno = new Aluno();// Crio objeto aluno vazio e depois cada campo do meu DTO é copiado para Aluno.
+    // Caminho fixo no Windows
+    private final String DIRETORIO_FOTOS = "C:\\Users\\Glêisson\\Pictures\\fotosInAula";
+
+    // Criando aluno com a foto
+    public AlunoResponseDTO criarAluno(AlunoRequestDTO alunoDTO, MultipartFile foto) {
+
+        Aluno aluno = new Aluno();
         aluno.setNome(alunoDTO.nome());
         aluno.setEmail(alunoDTO.email());
         aluno.setSenha(alunoDTO.senha());
 
-        //Verifico se a minha lista de materia não é nula e nem vazia
-        if (alunoDTO.materiasIDs() != null && !alunoDTO.materiasIDs().isEmpty()){
-            List<Materia> materias = materiaRepository.findAllById(alunoDTO.materiasIDs());// faz a busca de todas as materias com ids enviado no meu DTO.
-            aluno.setMaterias(materias);//Associa as materias ao Aluno
+        // associa matérias
+        if (alunoDTO.materiasIDs() != null && !alunoDTO.materiasIDs().isEmpty()) {
+            List<Materia> materias = materiaRepository.findAllById(alunoDTO.materiasIDs());
+            aluno.setMaterias(materias);
         }
-        Aluno alunoSalvo = alunoRepository.save(aluno);// salvo no meu banco
-        return toResponseDTO(alunoSalvo);//Retorna e Monta meu DTO
+
+        // salva a foto (SE FOI ENVIADA)
+        if (foto != null && !foto.isEmpty()) {
+            try {
+                String nomeArquivo = salvarFotoNoDisco(foto);
+                aluno.setFoto(nomeArquivo); // salva só o nome do arquivo
+            } catch (IOException e) {
+                throw new RuntimeException("Erro ao salvar foto: " + e.getMessage());
+            }
+        }
+
+        Aluno alunoSalvo = alunoRepository.save(aluno);
+        return toResponseDTO(alunoSalvo);
     }
 
+    // Salvando no meu HD
+    private String salvarFotoNoDisco(MultipartFile foto) throws IOException {
+
+        // nome único
+        String nomeArquivo = System.currentTimeMillis() + "-" + foto.getOriginalFilename();
+
+        // caminho final
+        Path caminho = Paths.get(DIRETORIO_FOTOS, nomeArquivo);
+
+        // cria diretório se não existir
+        Files.createDirectories(Paths.get(DIRETORIO_FOTOS));
+
+        // salva o arquivo
+        Files.copy(foto.getInputStream(), caminho, StandardCopyOption.REPLACE_EXISTING);
+
+        return nomeArquivo;
+    }
+
+
+    // Lista todos os alunos.
     public List<AlunoResponseDTO> listarTodos() {
         return alunoRepository.findAll()
                 .stream()
@@ -49,68 +91,97 @@ public class AlunoService {
                 .collect(Collectors.toList());
     }
 
+    // Busca por id do Aluno.
     public AlunoResponseDTO buscarPorId(Long id) {
         Aluno aluno = alunoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
         return toResponseDTO(aluno);
     }
 
-    //Método para converter Aluno em AlunoDTO.
+    // Convete de Aluno para AlunoDTO.
     private AlunoResponseDTO toResponseDTO(Aluno aluno) {
-        // Converte as matérias do aluno em DTOs
+
         List<MateriaResponseDTO> materias = aluno.getMaterias()
-                .stream()//Posso processsar a lista funcionalmente.
-                .map(m -> new MateriaResponseDTO( // Para cada matera m do stream, cria um novo MateriaResponseDTO
+                .stream()
+                .map(m -> new MateriaResponseDTO(
                         m.getId(),
                         m.getNome(),
                         m.getDescricao()
                 ))
-                .collect(Collectors.toList()); //função é juntar todas as MateriaResponseDTO em uma lista de MateriaResponseDTO
+                .collect(Collectors.toList());
 
-        // Pega apenas os IDs das aulas
-        List<Long> aulasIds = aluno.getAulas()// obter a lista de Aula associadas ao aluno.
-                .stream()//Cria um stream para percorrer a lista
-                .map(Aula::getId)//Para cada Aula, aplico um getId e transforma o item do stream no meu Integer ID
-                .collect(Collectors.toList());// Coleto todos os IDs para uma List<Integer> chamada aulasIDs
-        //Retono o meu AlunoResponseDTO criado com os campos preenchidos.
+        List<Long> aulasIds = aluno.getAulas()
+                .stream()
+                .map(Aula::getId)
+                .collect(Collectors.toList());
+
         return new AlunoResponseDTO(
                 aluno.getId(),
                 aluno.getNome(),
                 aluno.getEmail(),
+                aluno.getFoto() != null
+                        ? "http://localhost:8080/uploads/" + aluno.getFoto()
+                        : null,
                 materias,
                 aulasIds
         );
     }
 
+
+    // Atualizo o meu Aluno
     public AlunoResponseDTO atualizarAluno(Long id, AlunoRequestDTO alunoDTO) {
-        Aluno aluno = alunoRepository.findById(id)//busca por id do aluno, caso não encontre gera minha exceção.
+        Aluno aluno = alunoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Aluno não encontrado"));
 
-        //Atualizo os dados basicos do aluno.
-        aluno.setNome(alunoDTO.nome());
-        aluno.setEmail(alunoDTO.email());
-        aluno.setSenha(alunoDTO.senha());
+        // 🔹 Atualização parcial segura
+        if (alunoDTO.nome() != null) {
+            aluno.setNome(alunoDTO.nome());
+        }
 
-        //Caso a requisição tenha Ids de materia
-        if (alunoDTO.materiasIDs() != null && !alunoDTO.materiasIDs().isEmpty()) {
-            List<Materia> materias = materiaRepository.findAllById(alunoDTO.materiasIDs());
-            aluno.setMaterias(materias);
-            //verifica se existe a lista de IDs de materias, busca no banco com FindAllById e atualiza as materias com as novas que foram enviadas
-        } else {
-            aluno.getMaterias().clear();
-            // Caso a requisição não enviar materias, remove todas as materias do aluno.
+        if (alunoDTO.email() != null) {
+            aluno.setEmail(alunoDTO.email());
+        }
+
+        if (alunoDTO.senha() != null && !alunoDTO.senha().isBlank()) {
+            aluno.setSenha(alunoDTO.senha());
+        }
+
+        if (alunoDTO.materiasIDs() != null) {
+            if (!alunoDTO.materiasIDs().isEmpty()) {
+                List<Materia> materias = materiaRepository.findAllById(alunoDTO.materiasIDs());
+                aluno.setMaterias(materias);
+            } else {
+                aluno.getMaterias().clear();
+            }
         }
 
         Aluno atualizado = alunoRepository.save(aluno);
-        //Salvo as alterações e retorno o Aluno
         return toResponseDTO(atualizado);
     }
 
+
+    // Deleto meu Aluno
     public void deletarAluno(Long id) {
         if (!alunoRepository.existsById(id)) {
             throw new RuntimeException("Aluno não encontrado para exclusão");
         }
         alunoRepository.deleteById(id);
     }
+
+    public AlunoResponseDTO login(LoginRequestDTO dto) {
+
+        Aluno aluno = alunoRepository
+                .findByEmail(dto.getEmail())
+                .orElseThrow(() -> new RuntimeException("Email não encontrado"));
+
+        if (!aluno.getSenha().equals(dto.getSenha())) {
+            throw new RuntimeException("Senha incorreta");
+        }
+
+        // ✅ converte entidade → DTO corretamente
+        return toResponseDTO(aluno);
+    }
+
+
 
 }

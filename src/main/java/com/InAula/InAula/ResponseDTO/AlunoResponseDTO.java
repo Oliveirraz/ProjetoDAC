@@ -4,6 +4,6 @@ import java.util.List;
 
 //O ResponseDTO -> serve para trafegar os dados de forma segura, sem expor toda a entidade JPA.
 //Posso usar ela no controller, service dentro da minha aplicação.
-public record AlunoResponseDTO(Long id, String nome, String email, List<MateriaResponseDTO> materias, List<Long> aulasId) {
+public record AlunoResponseDTO(Long id, String nome, String email, String foto, List<MateriaResponseDTO> materias, List<Long> aulasId) {
 
 }
