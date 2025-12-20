@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -42,6 +41,11 @@ public class ProfessorService {
 
         // ✅ PERFIL FIXO (resolve o erro)
         professor.setPerfil("Professor");
+
+        if (dto.valorHoraAula() != null) {
+            professor.setValorHoraAula(dto.valorHoraAula());
+        }
+
 
         // FOTO (igual aluno)
         if (foto != null && !foto.isEmpty()) {

@@ -6,7 +6,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.sql.Time;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,14 +26,20 @@ public class Aula {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, name = "data")
+    private LocalDate data;
+
     @Column(nullable = false, name = "horaInicio")
-    private Time horaInicio;
+    private LocalTime horaInicio;
 
     @Column(nullable = false, name = "horaFim")
-    private Time horaFim;
+    private LocalTime horaFim;
 
     @Column(nullable = false, name = "local")
     private String local;
+
+    @Column(nullable = false, name = "valorHora")
+    private BigDecimal valorHora;
 
 
     @ManyToMany
@@ -42,5 +52,27 @@ public class Aula {
     @ManyToOne
     @JoinColumn(name = "id_professor", nullable = false)
     private Professor professor;
+
+    // Métodos auxiliares para cálculos (não salvos no banco)
+    @Transient
+    public BigDecimal getValorTotal() {
+        if (horaInicio == null || horaFim == null || valorHora == null) {
+            return BigDecimal.ZERO;
+        }
+
+        long minutos = Duration.between(horaInicio, horaFim).toMinutes();
+        double horas = minutos / 60.0;
+
+        return valorHora.multiply(BigDecimal.valueOf(horas))
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    @Transient
+    public long getDuracaoEmHoras() {
+        if (horaInicio == null || horaFim == null) {
+            return 0;
+        }
+        return Duration.between(horaInicio, horaFim).toHours();
+    }
 
 }

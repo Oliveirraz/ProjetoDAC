@@ -5,7 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.sql.Time;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Getter
@@ -15,9 +17,13 @@ import java.util.List;
 public class AulaResponseDTO {
 
     private Long id;
-    private Time horaInicio;
-    private Time horaFim;
+    private LocalDate data;
+    private LocalTime horaInicio;
+    private LocalTime horaFim;
     private String local;
+    private BigDecimal valorHora;
+    private BigDecimal valorTotal;  // Calculado
+    private Long duracaoHoras;      // Calculado
     private Long idProfessor;
     private List<Long> alunosIds;
 }

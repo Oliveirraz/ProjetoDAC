@@ -5,7 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Getter
@@ -14,8 +15,9 @@ import java.util.List;
 @AllArgsConstructor
 public class AulaRequestDTO {
 
-    private Time horaInicio;
-    private Time horaFim;
+    private LocalDate data;
+    private LocalTime horaInicio;
+    private LocalTime horaFim;
     private String local;
     private Long idProfessor;
     private List<Long> alunosIds;

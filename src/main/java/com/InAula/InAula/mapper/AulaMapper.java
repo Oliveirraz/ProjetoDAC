@@ -25,25 +25,19 @@ public class AulaMapper {
     // Entidade (Aula) -> DTO de Resposta (Response)
 
     public static AulaResponseDTO toResponseDto(Aula aula) {
-
-        // Mapeia campos diretos (idAula, horaInicio, horaFim, local)
-        AulaResponseDTO dto = modelMapper.map(aula, AulaResponseDTO.class);
-
-        // ID do Professor (ManyToOne)
-        if (aula.getProfessor() != null) {
-            dto.setIdProfessor(aula.getProfessor().getId());
-        }
-
-        // IDs dos Alunos (ManyToMany)
-        if (aula.getAlunos() != null && !aula.getAlunos().isEmpty()) {
-            dto.setAlunosIds(
-                    aula.getAlunos()
-                            .stream()
-                            .map(Aluno::getId)
-                            .collect(Collectors.toList())
-            );
-        }
-
+        AulaResponseDTO dto = new AulaResponseDTO();
+        dto.setId(aula.getId());
+        dto.setData(aula.getData());
+        dto.setHoraInicio(aula.getHoraInicio());
+        dto.setHoraFim(aula.getHoraFim());
+        dto.setLocal(aula.getLocal());
+        dto.setValorHora(aula.getValorHora());
+        dto.setValorTotal(aula.getValorTotal());  // Calculado
+        dto.setDuracaoHoras(aula.getDuracaoEmHoras());  // Calculado
+        dto.setIdProfessor(aula.getProfessor().getId());
+        dto.setAlunosIds(aula.getAlunos().stream()
+                .map(aluno -> aluno.getId())
+                .collect(Collectors.toList()));
         return dto;
     }
 }

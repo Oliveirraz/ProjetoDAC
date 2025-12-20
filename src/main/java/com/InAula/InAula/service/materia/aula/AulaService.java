@@ -37,9 +37,13 @@ public class AulaService {
 
         // Cria e Mapeia a Entidade Aula manualmente
         Aula aula = new Aula();
+        aula.setData(dto.getData());
         aula.setHoraInicio(dto.getHoraInicio());
         aula.setHoraFim(dto.getHoraFim());
         aula.setLocal(dto.getLocal());
+
+        // Copia o valorHora do professor
+        aula.setValorHora(professor.getValorHoraAula());
 
         // Injeta as Entidades de Chave Estrangeira
         aula.setProfessor(professor);
@@ -75,12 +79,18 @@ public class AulaService {
         Professor novoProfessor = professorRepository.findById(dto.getIdProfessor())
                 .orElseThrow(()
                         -> new ResourceNotFoundException("Professor não encontrado com ID: " + dto.getIdProfessor()));
+
         List<Aluno> novosAlunos = alunoRepository.findAllById(dto.getAlunosIds());
+
+        aulaExistente.setData(dto.getData());
         aulaExistente.setHoraInicio(dto.getHoraInicio());
         aulaExistente.setHoraFim(dto.getHoraFim());
         aulaExistente.setLocal(dto.getLocal());
         aulaExistente.setProfessor(novoProfessor);
         aulaExistente.setAlunos(novosAlunos);
+
+        // Atualiza o valorHora se o professor mudou
+        aulaExistente.setValorHora(novoProfessor.getValorHoraAula());
 
         Aula atualizada = aulaRepository.save(aulaExistente);
         return AulaMapper.toResponseDto(atualizada);
