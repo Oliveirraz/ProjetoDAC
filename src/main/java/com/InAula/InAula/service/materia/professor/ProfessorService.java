@@ -28,10 +28,11 @@ public class ProfessorService {
     private final ProfessorRepository professorRepository;
     private final MateriaRepository materiaRepository;
 
-    // 📁 mesmo padrão do aluno
+    // mesmo padrão do aluno onde estão as fotos
     private final String DIRETORIO_FOTOS = "C:\\Users\\Glêisson\\Pictures\\fotosInAula";
 
-    // ✅ CRIAR PROFESSOR (igual aluno)
+
+    // CRIAR PROFESSOR
     public ProfessorResponseDTO criarProfessor(ProfessorRequestDTO dto, MultipartFile foto) {
 
         Professor professor = new Professor();
@@ -39,21 +40,20 @@ public class ProfessorService {
         professor.setEmail(dto.email());
         professor.setSenha(dto.senha());
 
-        // ✅ PERFIL FIXO (resolve o erro)
+        //Perfil fixo
         professor.setPerfil("Professor");
 
         if (dto.valorHoraAula() != null) {
             professor.setValorHoraAula(dto.valorHoraAula());
         }
 
-
-        // FOTO (igual aluno)
+        // FOTO
         if (foto != null && !foto.isEmpty()) {
             try {
                 String nomeArquivo = salvarFotoNoDisco(foto);
                 professor.setFoto(nomeArquivo);
             } catch (IOException e) {
-                throw new RuntimeException("Erro ao salvar foto: " + e.getMessage());
+                throw new RuntimeException("Erro ao salvar a foto do professor");
             }
         }
 
@@ -61,8 +61,7 @@ public class ProfessorService {
         return toResponseDTO(salvo);
     }
 
-
-    // 📄 LISTAR
+    // LISTAR PROFESSORES
     public List<ProfessorResponseDTO> listarTodos() {
         return professorRepository.findAll()
                 .stream()
@@ -70,26 +69,33 @@ public class ProfessorService {
                 .collect(Collectors.toList());
     }
 
-    // =========================
+
     // BUSCAR POR ID
-    // =========================
     public ProfessorResponseDTO buscarPorId(Long id) {
         Professor professor = professorRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Professor não encontrado"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Professor não encontrado"));
         return toResponseDTO(professor);
     }
 
-    // =========================
-    // ATUALIZAR
-    // =========================
+
+    // ATUALIZAR PROFESSOR
     public ProfessorResponseDTO atualizarProfessor(Long id, ProfessorRequestDTO dto) {
+
         Professor professor = professorRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Professor não encontrado"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Professor não encontrado"));
 
         if (dto.nome() != null) professor.setNome(dto.nome());
         if (dto.email() != null) professor.setEmail(dto.email());
         if (dto.senha() != null && !dto.senha().isBlank()) professor.setSenha(dto.senha());
-        if (dto.perfil() != null) professor.setPerfil(dto.perfil());
+
+        // Proteção simples de regra
+        if (dto.perfil() != null && !dto.perfil().equalsIgnoreCase("Professor")) {
+            throw new IllegalArgumentException(
+                    "Perfil inválido. Professor não pode ter outro perfil.");
+        }
+
         if (dto.valorHoraAula() != null) professor.setValorHoraAula(dto.valorHoraAula());
         if (dto.foto() != null) professor.setFoto(dto.foto());
 
@@ -106,31 +112,34 @@ public class ProfessorService {
         return toResponseDTO(atualizado);
     }
 
-    // =========================
-    // DELETAR
-    // =========================
+
+    // DELETAR PROFESSOR
     public void deletarProfessor(Long id) {
+
         if (!professorRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Professor não encontrado para exclusão");
+            throw new ResourceNotFoundException(
+                    "Professor não encontrado para exclusão");
         }
+
         professorRepository.deleteById(id);
     }
 
-    // =========================
     // LOGIN
-    // =========================
     public ProfessorResponseDTO login(String email, String senha) {
+
         Professor professor = professorRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Email não encontrado"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Email não encontrado"));
 
         if (!professor.getSenha().equals(senha)) {
-            throw new RuntimeException("Senha incorreta");
+            throw new IllegalArgumentException("Senha incorreta");
         }
 
         return toResponseDTO(professor);
     }
 
-    // 💾 salva no HD (IGUAL ALUNO)
+
+    // SALVAR FOTO NO DISCO
     private String salvarFotoNoDisco(MultipartFile foto) throws IOException {
 
         String nomeArquivo = System.currentTimeMillis() + "-" + foto.getOriginalFilename();
@@ -143,9 +152,8 @@ public class ProfessorService {
         return nomeArquivo;
     }
 
-    // =========================
+
     // CONVERSÃO PARA DTO
-    // =========================
     private ProfessorResponseDTO toResponseDTO(Professor professor) {
 
         List<MateriaResponseDTO> materias = professor.getMaterias()
@@ -176,4 +184,21 @@ public class ProfessorService {
         );
     }
 
+
+    // LISTAR MATÉRIAS DO PROFESSOR
+    public List<MateriaResponseDTO> listarMateriasDoProfessor(Long professorId) {
+
+        Professor professor = professorRepository.findById(professorId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Professor não encontrado"));
+
+        return professor.getMaterias()
+                .stream()
+                .map(m -> new MateriaResponseDTO(
+                        m.getId(),
+                        m.getNome(),
+                        m.getDescricao()
+                ))
+                .collect(Collectors.toList());
+    }
 }

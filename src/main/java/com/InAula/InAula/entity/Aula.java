@@ -41,6 +41,15 @@ public class Aula {
     @Column(nullable = false, name = "valorHora")
     private BigDecimal valorHora;
 
+    @Column(name = "capacidade_maxima")
+    private Integer capacidadeMaxima;
+
+
+
+    @ManyToOne
+    @JoinColumn(name = "id_materia", nullable = false)
+    private Materia materia;
+
 
     @ManyToMany
     @JoinTable(name = "aulas_alunos",
@@ -53,26 +62,5 @@ public class Aula {
     @JoinColumn(name = "id_professor", nullable = false)
     private Professor professor;
 
-    // Métodos auxiliares para cálculos (não salvos no banco)
-    @Transient
-    public BigDecimal getValorTotal() {
-        if (horaInicio == null || horaFim == null || valorHora == null) {
-            return BigDecimal.ZERO;
-        }
-
-        long minutos = Duration.between(horaInicio, horaFim).toMinutes();
-        double horas = minutos / 60.0;
-
-        return valorHora.multiply(BigDecimal.valueOf(horas))
-                .setScale(2, RoundingMode.HALF_UP);
-    }
-
-    @Transient
-    public long getDuracaoEmHoras() {
-        if (horaInicio == null || horaFim == null) {
-            return 0;
-        }
-        return Duration.between(horaInicio, horaFim).toHours();
-    }
 
 }

@@ -1,4 +1,4 @@
 package com.InAula.InAula.RequestDTO;
 
-public record MateriaRequestDTO(String nome, String descricao) {
+public record MateriaRequestDTO(String nome, String descricao, Long professorId) {
 }

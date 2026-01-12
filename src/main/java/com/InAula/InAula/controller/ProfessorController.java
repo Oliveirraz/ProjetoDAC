@@ -1,6 +1,7 @@
 package com.InAula.InAula.controller;
 
 import com.InAula.InAula.RequestDTO.ProfessorRequestDTO;
+import com.InAula.InAula.ResponseDTO.MateriaResponseDTO;
 import com.InAula.InAula.ResponseDTO.ProfessorResponseDTO;
 import com.InAula.InAula.service.materia.professor.ProfessorService;
 import org.springframework.http.MediaType;
@@ -61,4 +62,10 @@ public class ProfessorController {
     public ProfessorResponseDTO login(@RequestBody ProfessorRequestDTO dto) {
         return professorService.login(dto.email(), dto.senha());
     }
+
+    @GetMapping("/{id}/materias")
+    public List<MateriaResponseDTO> listarMateriasDoProfessor(@PathVariable Long id) {
+        return professorService.listarMateriasDoProfessor(id);
+    }
+
 }

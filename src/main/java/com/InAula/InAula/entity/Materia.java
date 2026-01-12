@@ -27,10 +27,16 @@ public class Materia {
     @Column(nullable = false, name = "descricao")
     private String descricao;
 
+    //Essa ligação esta morta, pois a ideia mudou antes o aluno poderia se cadastrar ou selecionar
+    //Materias, mas pelo estilo de negocio ele apenas se matricula na aula.
     @ManyToMany(mappedBy = "materias")
     private List<Aluno> alunos = new ArrayList<>();
 
     @ManyToMany(mappedBy = "materias")
     private List<Professor> professores = new ArrayList<>();
+
+    @OneToMany(mappedBy = "materia")
+    private List<Aula> aulas = new ArrayList<>();
+
 
 }

@@ -2,42 +2,67 @@ package com.InAula.InAula.mapper;
 
 import com.InAula.InAula.RequestDTO.AulaRequestDTO;
 import com.InAula.InAula.ResponseDTO.AulaResponseDTO;
-import com.InAula.InAula.entity.Aluno;
 import com.InAula.InAula.entity.Aula;
-import org.modelmapper.ModelMapper;
-
-import java.util.stream.Collectors;
 
 public class AulaMapper {
 
     private AulaMapper() {}
 
-    private static final ModelMapper modelMapper = new ModelMapper();
-
-    // DTO de Requisição (Request) -> Entidade (Aula)
-    // Usado no Service para mapear campos básicos (horaInicio, local, etc.).
-
+    // DTO de Requisição - Entidade
     public static Aula toAula(AulaRequestDTO dto) {
-        Aula aula = modelMapper.map(dto, Aula.class);
+        Aula aula = new Aula();
+
+        aula.setData(dto.getData());
+        aula.setHoraInicio(dto.getHoraInicio());
+        aula.setHoraFim(dto.getHoraFim());
+        aula.setLocal(dto.getLocal());
+        aula.setCapacidadeMaxima(dto.getCapacidadeMaxima());
+        aula.setValorHora(dto.getValorHora());
+
         return aula;
     }
 
-    // Entidade (Aula) -> DTO de Resposta (Response)
 
+    // Entidade -> DTO de Resposta
     public static AulaResponseDTO toResponseDto(Aula aula) {
         AulaResponseDTO dto = new AulaResponseDTO();
+
+        // Aula
         dto.setId(aula.getId());
         dto.setData(aula.getData());
         dto.setHoraInicio(aula.getHoraInicio());
         dto.setHoraFim(aula.getHoraFim());
         dto.setLocal(aula.getLocal());
+        dto.setCapacidadeMaxima(aula.getCapacidadeMaxima());
+
+        // Professor
+        // Professor
+        if (aula.getProfessor() != null) {
+            dto.setIdProfessor(aula.getProfessor().getId());
+            dto.setNomeProfessor(aula.getProfessor().getNome());
+        }
+
+        // Valor da aula vem da AULA, não do professor
         dto.setValorHora(aula.getValorHora());
-        dto.setValorTotal(aula.getValorTotal());  // Calculado
-        dto.setDuracaoHoras(aula.getDuracaoEmHoras());  // Calculado
-        dto.setIdProfessor(aula.getProfessor().getId());
-        dto.setAlunosIds(aula.getAlunos().stream()
-                .map(aluno -> aluno.getId())
-                .collect(Collectors.toList()));
+
+
+        // Matéria
+        if (aula.getMateria() != null) {
+            dto.setIdMateria(aula.getMateria().getId());
+            dto.setNomeMateria(aula.getMateria().getNome());
+            dto.setDescricaoMateria(aula.getMateria().getDescricao());
+        }
+
+        // VAGAS EM TEMPO REAL
+        int totalAlunos = aula.getAlunos() != null ? aula.getAlunos().size() : 0;
+        int capacidade = aula.getCapacidadeMaxima() != null ? aula.getCapacidadeMaxima() : 0;
+
+        dto.setTotalAlunos(totalAlunos);
+        dto.setVagasDisponiveis(capacidade - totalAlunos);
+
         return dto;
     }
+
+
+
 }

@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("materias")
+@CrossOrigin(origins = "*")
 public class MateriaController {
 
     @Autowired
@@ -41,5 +42,9 @@ public class MateriaController {
     public void deletar(@PathVariable Long id) {
         materiaService.deletar(id);
     }
+
+
+
+
 
 }
