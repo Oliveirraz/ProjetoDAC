@@ -37,6 +37,4 @@ public class Materia {
 
     @OneToMany(mappedBy = "materia")
     private List<Aula> aulas = new ArrayList<>();
-
-
 }

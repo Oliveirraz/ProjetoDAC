@@ -1,6 +1,7 @@
 package com.InAula.InAula.controller;
 
 import com.InAula.InAula.RequestDTO.LoginRequestDTO;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import com.InAula.InAula.RequestDTO.AlunoRequestDTO;
 import com.InAula.InAula.ResponseDTO.AlunoResponseDTO;
@@ -23,6 +24,7 @@ public class AlunoController {
     // Criando o Aluno agora com foto
     @PostMapping(consumes = {"multipart/form-data"})
     public AlunoResponseDTO criarAluno(
+            @Valid
             @RequestPart("aluno") AlunoRequestDTO alunoDTO,
             @RequestPart(value = "foto", required = false) MultipartFile foto
     ) {
@@ -57,7 +59,7 @@ public class AlunoController {
     }
 
     @PostMapping("/login")
-    public AlunoResponseDTO login(@RequestBody LoginRequestDTO loginDTO) {
+    public AlunoResponseDTO login(@Valid @RequestBody LoginRequestDTO loginDTO) {
         return alunoService.login(loginDTO);
     }
 

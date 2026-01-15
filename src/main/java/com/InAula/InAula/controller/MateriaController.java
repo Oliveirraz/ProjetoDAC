@@ -4,6 +4,7 @@ package com.InAula.InAula.controller;
 import com.InAula.InAula.RequestDTO.MateriaRequestDTO;
 import com.InAula.InAula.ResponseDTO.MateriaResponseDTO;
 import com.InAula.InAula.service.materia.MateriaService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +19,7 @@ public class MateriaController {
     private MateriaService materiaService;
 
     @PostMapping
-    public MateriaResponseDTO criar(@RequestBody MateriaRequestDTO dto) {
+    public MateriaResponseDTO criar(@Valid @RequestBody MateriaRequestDTO dto) {
         return materiaService.criar(dto);
     }
 

@@ -4,6 +4,7 @@ import com.InAula.InAula.RequestDTO.ProfessorRequestDTO;
 import com.InAula.InAula.ResponseDTO.MateriaResponseDTO;
 import com.InAula.InAula.ResponseDTO.ProfessorResponseDTO;
 import com.InAula.InAula.service.materia.professor.ProfessorService;
+import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +25,7 @@ public class ProfessorController {
     // cria aluno com foto
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ProfessorResponseDTO criar(
+            @Valid
             @RequestPart("professor") ProfessorRequestDTO dto,
             @RequestPart(value = "foto", required = false) MultipartFile foto
     ) {
@@ -59,7 +61,7 @@ public class ProfessorController {
 
     // login
     @PostMapping("/login")
-    public ProfessorResponseDTO login(@RequestBody ProfessorRequestDTO dto) {
+    public ProfessorResponseDTO login( @RequestBody ProfessorRequestDTO dto) {
         return professorService.login(dto.email(), dto.senha());
     }
 
