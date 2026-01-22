@@ -1,7 +1,9 @@
 package com.InAula.InAula.RequestDTO;
 
 import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,13 +31,22 @@ public class AulaRequestDTO {
     @NotNull(message = "Hora de fim é obrigatória")
     private LocalTime horaFim;
 
+    @NotBlank(message = "O local da aula é obrigatório")
     private String local;
+
+    @NotNull(message = "O valor da hora é obrigatório")
+    @Positive(message = "O valor da hora deve ser positivo")
     private BigDecimal valorHora;
 
+    @NotNull(message = "O professor é obrigatório")
     private Long idProfessor;
+
+    @NotNull(message = "A matéria é obrigatória")
     private Long idMateria;
 
+    @Positive(message = "A capacidade máxima deve ser positiva")
     private Integer capacidadeMaxima;
+
     private List<Long> alunosIds;
 }
 

@@ -7,8 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -44,12 +42,9 @@ public class Aula {
     @Column(name = "capacidade_maxima")
     private Integer capacidadeMaxima;
 
-
-
     @ManyToOne
     @JoinColumn(name = "id_materia", nullable = false)
     private Materia materia;
-
 
     @ManyToMany
     @JoinTable(name = "aulas_alunos",
