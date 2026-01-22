@@ -4,9 +4,11 @@ package com.InAula.InAula.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Entity
@@ -34,5 +36,8 @@ public class Professor extends Usuario {
     private List<Materia> materias = new ArrayList<>();
 
 
-
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(()->"ROLE_PROFESSOR");
+    }
 }

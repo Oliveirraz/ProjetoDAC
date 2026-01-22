@@ -10,6 +10,10 @@ import com.InAula.InAula.exception.ResourceNotFoundException;
 import com.InAula.InAula.repository.MateriaRepository;
 import com.InAula.InAula.repository.ProfessorRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,10 +27,11 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ProfessorService {
+public class ProfessorService implements UserDetailsService {
 
     private final ProfessorRepository professorRepository;
     private final MateriaRepository materiaRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // mesmo padrão do aluno onde estão as fotos
     private final String DIRETORIO_FOTOS = "C:\\Users\\Glêisson\\Pictures\\fotosInAula";
@@ -38,7 +43,7 @@ public class ProfessorService {
         Professor professor = new Professor();
         professor.setNome(dto.nome());
         professor.setEmail(dto.email());
-        professor.setSenha(dto.senha());
+        professor.setSenha(passwordEncoder.encode(dto.senha()));
 
         //Perfil fixo
         professor.setPerfil("Professor");
@@ -124,20 +129,6 @@ public class ProfessorService {
         professorRepository.deleteById(id);
     }
 
-    // LOGIN
-    public ProfessorResponseDTO login(String email, String senha) {
-
-        Professor professor = professorRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Email não encontrado"));
-
-        if (!professor.getSenha().equals(senha)) {
-            throw new IllegalArgumentException("Senha incorreta");
-        }
-
-        return toResponseDTO(professor);
-    }
-
 
     // SALVAR FOTO NO DISCO
     private String salvarFotoNoDisco(MultipartFile foto) throws IOException {
@@ -200,5 +191,13 @@ public class ProfessorService {
                         m.getDescricao()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Professor professor = professorRepository.findByEmail(email)
+                .orElseThrow(()->
+                        new UsernameNotFoundException("Professor não encontrado com email: " + email));
+        return professor;
     }
 }

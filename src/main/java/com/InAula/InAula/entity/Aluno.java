@@ -7,8 +7,10 @@ import com.InAula.InAula.entity.Usuario;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Entity
@@ -29,4 +31,8 @@ public class Aluno extends Usuario {
     )
     private List<Materia> materias = new ArrayList<>();
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(()->"ROLE_ALUNO");
+    }
 }

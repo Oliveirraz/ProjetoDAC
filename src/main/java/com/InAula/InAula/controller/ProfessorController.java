@@ -22,13 +22,16 @@ public class ProfessorController {
     }
 
     // cria aluno com foto
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ProfessorResponseDTO criar(
+    @PostMapping(
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ProfessorResponseDTO criarProfessor(
             @RequestPart("professor") ProfessorRequestDTO dto,
             @RequestPart(value = "foto", required = false) MultipartFile foto
     ) {
         return professorService.criarProfessor(dto, foto);
     }
+
 
     // lista todos os alunos
     @GetMapping
@@ -58,10 +61,10 @@ public class ProfessorController {
     }
 
     // login
-    @PostMapping("/login")
+    /*@PostMapping("/login")
     public ProfessorResponseDTO login(@RequestBody ProfessorRequestDTO dto) {
         return professorService.login(dto.email(), dto.senha());
-    }
+    }*/
 
     @GetMapping("/{id}/materias")
     public List<MateriaResponseDTO> listarMateriasDoProfessor(@PathVariable Long id) {
