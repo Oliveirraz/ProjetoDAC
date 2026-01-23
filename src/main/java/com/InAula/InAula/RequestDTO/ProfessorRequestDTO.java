@@ -24,8 +24,6 @@ public record ProfessorRequestDTO(
         @PositiveOrZero(message = "O valor da hora aula deve ser positivo")
         BigDecimal valorHoraAula,
 
-        @NotNull(message = "O professor deve ter pelo menos uma matéria")
-        @Size(min = 1, message = "O professor deve estar vinculado a pelo menos uma matéria")
         List<Long> materiasIds,
 
         String foto) {
