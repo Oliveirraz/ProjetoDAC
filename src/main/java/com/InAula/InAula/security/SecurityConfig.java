@@ -45,8 +45,17 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST,"/professores").permitAll()
-                        .requestMatchers("/api/auth/login").permitAll()
+                        // públicos
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/professores").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/alunos").permitAll()
+
+                        // protegidos
+                        .requestMatchers(HttpMethod.POST, "/aulas").hasRole("PROFESSOR")
+                        .requestMatchers(HttpMethod.DELETE, "/aulas/**").hasRole("PROFESSOR")
+                        .requestMatchers(HttpMethod.POST, "/materias").hasRole("PROFESSOR")
+                        .requestMatchers(HttpMethod.DELETE, "/materias/**").hasRole("PROFESSOR")
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
