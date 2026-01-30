@@ -40,24 +40,52 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
+                .cors(org.springframework.security.config.Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
+
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+
                 .authorizeHttpRequests(auth -> auth
-                        // públicos
+
+                        // ENDPOINTS PÚBLICOS
+
+                        // Login (gera JWT)
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/professores/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/alunos/login").permitAll()
+
+                        // Cadastro inicial
                         .requestMatchers(HttpMethod.POST, "/professores").permitAll()
                         .requestMatchers(HttpMethod.POST, "/alunos").permitAll()
 
-                        // protegidos
+                        // PROFESSOR (PRÓPRIA CONTA)
+                        .requestMatchers(HttpMethod.GET, "/professores/me").hasRole("PROFESSOR")
+                        .requestMatchers(HttpMethod.PUT, "/professores/me").hasRole("PROFESSOR")
+                        .requestMatchers(HttpMethod.DELETE, "/professores/me").hasRole("PROFESSOR")
+
+                        // ALUNO (PRÓPRIA CONTA)
+                        .requestMatchers(HttpMethod.GET, "/alunos/me").hasRole("ALUNO")
+                        .requestMatchers(HttpMethod.PUT, "/alunos/me").hasRole("ALUNO")
+                        .requestMatchers(HttpMethod.DELETE, "/alunos/me").hasRole("ALUNO")
+
+                        // REGRAS DE NEGÓCIO
+
+                        // Aulas → só professor
                         .requestMatchers(HttpMethod.POST, "/aulas").hasRole("PROFESSOR")
+                        .requestMatchers(HttpMethod.PUT, "/aulas/**").hasRole("PROFESSOR")
                         .requestMatchers(HttpMethod.DELETE, "/aulas/**").hasRole("PROFESSOR")
+
+                        // Matérias → só professor
                         .requestMatchers(HttpMethod.POST, "/materias").hasRole("PROFESSOR")
+                        .requestMatchers(HttpMethod.PUT, "/materias/**").hasRole("PROFESSOR")
                         .requestMatchers(HttpMethod.DELETE, "/materias/**").hasRole("PROFESSOR")
 
+                        // Qualquer outra rota exige login
                         .anyRequest().authenticated()
                 )
+
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -65,5 +93,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
+
 
 }

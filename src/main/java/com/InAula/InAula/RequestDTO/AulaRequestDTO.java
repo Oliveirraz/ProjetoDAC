@@ -20,7 +20,6 @@ import java.util.List;
 @AllArgsConstructor
 public class AulaRequestDTO {
 
-    // ALGUMAS VALIDAÇÕES
     @NotNull(message = "Data da aula é obrigatória")
     @FutureOrPresent(message = "A data da aula não pode ser anterior à data atual")
     private LocalDate data;
@@ -34,13 +33,6 @@ public class AulaRequestDTO {
     @NotBlank(message = "O local da aula é obrigatório")
     private String local;
 
-    @NotNull(message = "O valor da hora é obrigatório")
-    @Positive(message = "O valor da hora deve ser positivo")
-    private BigDecimal valorHora;
-
-    @NotNull(message = "O professor é obrigatório")
-    private Long idProfessor;
-
     @NotNull(message = "A matéria é obrigatória")
     private Long idMateria;
 
@@ -49,4 +41,5 @@ public class AulaRequestDTO {
 
     private List<Long> alunosIds;
 }
+
 

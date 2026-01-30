@@ -10,6 +10,8 @@ import com.InAula.InAula.repository.ProfessorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -23,6 +25,95 @@ public class MateriaService {
     private ProfessorRepository professorRepository;
 
 
+
+
+    private Professor getProfessorLogado() {
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String email = authentication.getName();
+
+        return professorRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Professor logado não encontrado"));
+    }
+
+    public MateriaResponseDTO criarMateriaProfessorLogado(MateriaRequestDTO dto) {
+
+        Professor professor = getProfessorLogado();
+
+        Materia materia = new Materia();
+        materia.setNome(dto.nome());
+        materia.setDescricao(dto.descricao());
+
+        // associação bidirecional
+        materia.getProfessores().add(professor);
+        professor.getMaterias().add(materia);
+
+        materiaRepository.save(materia);
+
+        return toResponse(materia);
+    }
+
+
+    public List<MateriaResponseDTO> listarMateriasProfessorLogado() {
+
+        Professor professor = getProfessorLogado();
+
+        return professor.getMaterias()
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    public MateriaResponseDTO atualizarMateriaProfessorLogado(
+            Long materiaId, MateriaRequestDTO dto) {
+
+        Professor professor = getProfessorLogado();
+
+        Materia materia = materiaRepository.findById(materiaId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Matéria não encontrada"));
+
+        // segurança: verifica vínculo
+        if (!materia.getProfessores().contains(professor)) {
+            throw new RuntimeException("Você não pode atualizar esta matéria");
+        }
+
+        materia.setNome(dto.nome());
+        materia.setDescricao(dto.descricao());
+
+        materiaRepository.save(materia);
+
+        return toResponse(materia);
+    }
+
+    @Transactional
+    public void deletarMateriaProfessorLogado(Long materiaId) {
+
+        Professor professor = getProfessorLogado();
+
+        Materia materia = materiaRepository.findById(materiaId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Matéria não encontrada"));
+
+        if (!materia.getProfessores().contains(professor)) {
+            throw new RuntimeException("Você não pode deletar esta matéria");
+        }
+
+        // remove vínculo bidirecional
+        materia.getProfessores().remove(professor);
+        professor.getMaterias().remove(materia);
+
+        // se a matéria não tiver mais professores, pode apagar
+        if (materia.getProfessores().isEmpty()) {
+            materiaRepository.delete(materia);
+        }
+    }
+
+
+
+    // Métodos do Admin
     // CRIAR MATÉRIA
     public MateriaResponseDTO criar(MateriaRequestDTO dto) {
 

@@ -11,6 +11,7 @@ import com.InAula.InAula.exception.ResourceNotFoundException;
 import com.InAula.InAula.repository.AlunoRepository;
 import com.InAula.InAula.repository.MateriaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,18 +24,20 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AlunoService {
 
-    // Repository acessa o banco, Service NÃO deve usar EntityManager direto
+    // Repository é responsável por acesso ao banco
     private final AlunoRepository alunoRepository;
-    private final MateriaRepository materiaRepository;
 
-    // Caminho físico onde as fotos serão salvas
+    // Usado para criptografar senha (padrão da apostila)
+    private final PasswordEncoder passwordEncoder;
+
+    // Diretório físico para salvar fotos
     private static final String DIRETORIO_FOTOS =
             "C:\\Users\\Glêisson\\Pictures\\fotosInAula";
 
-    // CRIAR ALUNO
+
     public AlunoResponseDTO criarAluno(AlunoRequestDTO alunoDTO, MultipartFile foto) {
 
-        //  Regra de negócio: Email não pode ser duplicado
+        // Regra de negócio: email único
         if (alunoRepository.findByEmail(alunoDTO.email()).isPresent()) {
             throw new IllegalArgumentException("Email já cadastrado");
         }
@@ -42,42 +45,35 @@ public class AlunoService {
         Aluno aluno = new Aluno();
         aluno.setNome(alunoDTO.nome());
         aluno.setEmail(alunoDTO.email());
-        aluno.setSenha(alunoDTO.senha()); // Lembrar de Criptografar a SENHA
 
-        // Associa matérias (se vierem IDs)
-        if (alunoDTO.materiasIDs() != null && !alunoDTO.materiasIDs().isEmpty()) {
-            List<Materia> materias = materiaRepository.findAllById(alunoDTO.materiasIDs());
-            aluno.setMaterias(materias);
-        }
+        aluno.setSenha(passwordEncoder.encode(alunoDTO.senha()));
 
         // Upload de foto é opcional
         if (foto != null && !foto.isEmpty()) {
             aluno.setFoto(salvarFotoNoDiscoSeguro(foto));
         }
 
-        // Persistência
         Aluno salvo = alunoRepository.save(aluno);
 
-        // Nunca retorne Entity para o frontend
         return toResponseDTO(salvo);
     }
 
 
-    // SALVAR FOTO (CAMADA DE INFRAESTRUTURA)
     private String salvarFotoNoDiscoSeguro(MultipartFile foto) {
 
         try {
-            // Nome único evita sobrescrita
-            String nomeArquivo = System.currentTimeMillis() + "-" + foto.getOriginalFilename();
+            String nomeArquivo =
+                    System.currentTimeMillis() + "-" + foto.getOriginalFilename();
 
-            // Garante que o diretório exista
             Files.createDirectories(Paths.get(DIRETORIO_FOTOS));
 
-            // Caminho final
             Path caminho = Paths.get(DIRETORIO_FOTOS, nomeArquivo);
 
-            // Salva o arquivo
-            Files.copy(foto.getInputStream(), caminho, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(
+                    foto.getInputStream(),
+                    caminho,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
 
             return nomeArquivo;
 
@@ -86,40 +82,30 @@ public class AlunoService {
         }
     }
 
-    // LISTAR TODOS
+
     public List<AlunoResponseDTO> listarTodos() {
         return alunoRepository.findAll()
                 .stream()
                 .map(this::toResponseDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    // BUSCAR POR ID
+
     public AlunoResponseDTO buscarPorId(Long id) {
         Aluno aluno = alunoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Aluno não encontrado"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Aluno não encontrado")
+                );
 
         return toResponseDTO(aluno);
     }
 
-    // CONVERSÃO ENTITY → DTO
-    private AlunoResponseDTO toResponseDTO(Aluno aluno) {
 
-        // Evita LazyException e controla o JSON
-        List<MateriaResponseDTO> materias = aluno.getMaterias()
-                .stream()
-                .map(m -> new MateriaResponseDTO(
-                        m.getId(),
-                        m.getNome(),
-                        m.getDescricao()
-                ))
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public AlunoResponseDTO buscarAlunoLogado(String email) {
 
-        // Retorna apenas IDs das aulas
-        List<Long> aulasIds = aluno.getAulas()
-                .stream()
-                .map(Aula::getId)
-                .collect(Collectors.toList());
+        Aluno aluno = alunoRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
 
         return new AlunoResponseDTO(
                 aluno.getId(),
@@ -128,18 +114,45 @@ public class AlunoService {
                 aluno.getFoto() != null
                         ? "http://localhost:8080/uploads/" + aluno.getFoto()
                         : null,
-                materias,
+                aluno.getAulas()
+                        .stream()
+                        .map(Aula::getId)
+                        .toList()
+        );
+    }
+
+
+    private AlunoResponseDTO toResponseDTO(Aluno aluno) {
+
+        // Retorna apenas IDs das aulas
+        List<Long> aulasIds = aluno.getAulas()
+                .stream()
+                .map(Aula::getId)
+                .toList();
+
+        return new AlunoResponseDTO(
+                aluno.getId(),
+                aluno.getNome(),
+                aluno.getEmail(),
+                aluno.getFoto() != null
+                        ? "http://localhost:8080/uploads/" + aluno.getFoto()
+                        : null,
                 aulasIds
         );
     }
 
-    // ATUALIZAR ALUNO (PATCH)
-    public AlunoResponseDTO atualizarAluno(Long id, AlunoRequestDTO alunoDTO) {
+
+    public AlunoResponseDTO atualizarAluno(
+            Long id,
+            AlunoRequestDTO alunoDTO,
+            MultipartFile foto
+    ) {
 
         Aluno aluno = alunoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Aluno não encontrado"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Aluno não encontrado")
+                );
 
-        // Atualização parcial (PATCH-like)
         if (alunoDTO.nome() != null) {
             aluno.setNome(alunoDTO.nome());
         }
@@ -149,34 +162,29 @@ public class AlunoService {
         }
 
         if (alunoDTO.senha() != null && !alunoDTO.senha().isBlank()) {
-            aluno.setSenha(alunoDTO.senha());
+            aluno.setSenha(passwordEncoder.encode(alunoDTO.senha()));
         }
 
-        // Atualiza vínculo com matérias
-        if (alunoDTO.materiasIDs() != null) {
-            if (alunoDTO.materiasIDs().isEmpty()) {
-                aluno.getMaterias().clear();
-            } else {
-                aluno.setMaterias(
-                        materiaRepository.findAllById(alunoDTO.materiasIDs())
-                );
-            }
+        if (foto != null && !foto.isEmpty()) {
+            aluno.setFoto(salvarFotoNoDiscoSeguro(foto));
         }
 
-        return toResponseDTO(alunoRepository.save(aluno));
+        Aluno atualizado = alunoRepository.save(aluno);
+
+        return toResponseDTO(atualizado);
     }
 
 
-    // DELETAR ALUNO E Remove vínculos com aulas
+
     @Transactional
     public void deletarAluno(Long id) {
 
         Aluno aluno = alunoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Aluno não encontrado para exclusão"
-                ));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Aluno não encontrado")
+                );
 
-        // Remove vínculos com aulas (lado dono)
+        // Remove vínculo com aulas
         if (aluno.getAulas() != null) {
             for (Aula aula : aluno.getAulas()) {
                 aula.getAlunos().remove(aluno);
@@ -184,25 +192,7 @@ public class AlunoService {
             aluno.getAulas().clear();
         }
 
-        //Remove vínculo com matérias
-        if (aluno.getMaterias() != null) {
-            aluno.getMaterias().clear();
-        }
-
         alunoRepository.delete(aluno);
     }
-
-    //  LOGIN - COM AUTENTICAÇÃO SIMPLES
-    public AlunoResponseDTO login(LoginRequestDTO dto) {
-
-        Aluno aluno = alunoRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("Email não encontrado"));
-
-        // Comparação simples - em produção: senha criptografada
-        if (!aluno.getSenha().equals(dto.getSenha())) {
-            throw new IllegalArgumentException("Senha incorreta");
-        }
-
-        return toResponseDTO(aluno);
-    }
 }
+

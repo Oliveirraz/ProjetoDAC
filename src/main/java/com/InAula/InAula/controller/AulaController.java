@@ -20,86 +20,57 @@ public class AulaController {
 
     private final AulaService aulaService;
 
-    // Criar aula
-    @PostMapping
-    public ResponseEntity<AulaResponseDTO> criarAula(@Valid @RequestBody AulaRequestDTO dto) {
-        AulaResponseDTO responseDTO = aulaService.salvarAula(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
+
+    // Criar aula (professor logado)
+    @PostMapping("/professor/me")
+    public ResponseEntity<AulaResponseDTO> criarAulaProfessorLogado(
+            @Valid @RequestBody AulaRequestDTO dto) {
+
+        AulaResponseDTO response =
+                aulaService.salvarAulaProfessorLogado(dto);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
-    // Buscar aula por ID
-    @GetMapping("/{id}")
-    public ResponseEntity<AulaResponseDTO> buscarPorId(@PathVariable Long id) {
-        AulaResponseDTO response = aulaService.buscarPorId(id);
-        return ResponseEntity.ok(response);
-    }
+    // Listar aulas do professor logado (paginado)
+    @GetMapping("/professor/me")
+    public ResponseEntity<Page<AulaResponseDTO>> listarAulasProfessorLogado(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
 
-    // Listar aulas - paginado e filtrável
-    @GetMapping
-    public ResponseEntity<Page<AulaResponseDTO>> listarAulas(
-            @RequestParam(required = false) Long professorId,
-            @RequestParam(required = false) String termo,
-            @RequestParam(defaultValue = "0") int page, // Começo na pagina 0
-            @RequestParam(defaultValue = "12") int size // Quantidade de Aulas por pagina
-    ) {
-
-        Page<AulaResponseDTO> aulasPaginadas; // Cria a variavel com resultado final
-
-        if (professorId != null) {
-            // Listagem por professor, paginada
-            aulasPaginadas = aulaService.listarPorProfessorPaginado(professorId, page, size);
-        } else if (termo != null && !termo.isBlank()) {
-            // Busca por termo - matéria ou professor paginada
-            aulasPaginadas = aulaService.buscarPorMateriaOuProfessor(termo, page, size);
-        } else {
-            // Listagem geral, paginada
-            aulasPaginadas = aulaService.listarTodosPaginado(page, size);
-        }
-
-        return ResponseEntity.ok(aulasPaginadas);
-    }
-
-
-    // Deletar aula
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarAula(@PathVariable Long id) {
-        aulaService.deletar(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    //Matricula o Aluno
-    @PostMapping("/{aulaId}/matricular/{alunoId}")
-    public ResponseEntity<AulaResponseDTO> matricularAluno(
-            @PathVariable Long aulaId,
-            @PathVariable Long alunoId) {
-
-        AulaResponseDTO response = aulaService.matricularAluno(aulaId, alunoId);
-        return ResponseEntity.ok(response);
-    }
-
-    // Listar aulas do aluno
-    @GetMapping("/aluno/{alunoId}")
-    public ResponseEntity<List<AulaResponseDTO>> listarAulasDoAluno(
-            @PathVariable Long alunoId
-    ) {
         return ResponseEntity.ok(
-                aulaService.listarAulasDoAluno(alunoId)
-        );
+                aulaService.listarAulasProfessorLogado(page, size));
     }
 
-    // Testado e Funcionando
-    @PutMapping("/{id}")
-    public ResponseEntity<AulaResponseDTO> atualizar(
+    // Buscar aula do professor logado por ID
+    @GetMapping("/professor/me/{id}")
+    public ResponseEntity<AulaResponseDTO> buscarAulaProfessorLogadoPorId(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                aulaService.buscarAulaProfessorLogadoPorId(id));
+    }
+
+    // Atualizar aula do professor logado
+    @PutMapping("/professor/me/{id}")
+    public ResponseEntity<AulaResponseDTO> atualizarAulaProfessorLogado(
             @PathVariable Long id,
             @RequestBody AulaRequestDTO dto) {
 
-        System.out.println(" PUT /aulas/" + id);
-        System.out.println("DTO: " + dto.getLocal());
-
-        AulaResponseDTO response = aulaService.atualizar(id, dto);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                aulaService.atualizarAulaProfessorLogado(id, dto));
     }
 
+    // Deletar aula do professor logado
+    @DeleteMapping("/professor/me/{id}")
+    public ResponseEntity<Void> deletarAulaProfessorLogado(
+            @PathVariable Long id) {
+
+        aulaService.deletarAulaProfessorLogado(id);
+        return ResponseEntity.noContent().build();
+    }
 
 
 

@@ -2,8 +2,6 @@ package com.InAula.InAula.security.auth;
 
 import com.InAula.InAula.RequestDTO.LoginRequestDTO;
 import com.InAula.InAula.ResponseDTO.LoginResponseDTO;
-import com.InAula.InAula.ResponseDTO.ProfessorResponseDTO;
-import com.InAula.InAula.entity.Professor;
 import com.InAula.InAula.security.jwt.TokenService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;

@@ -8,8 +8,11 @@ public class AulaMapper {
 
     private AulaMapper() {}
 
-    // DTO de Requisição - Entidade
+    // =========================
+    // DTO REQUEST -> ENTITY
+    // =========================
     public static Aula toAula(AulaRequestDTO dto) {
+
         Aula aula = new Aula();
 
         aula.setData(dto.getData());
@@ -17,14 +20,16 @@ public class AulaMapper {
         aula.setHoraFim(dto.getHoraFim());
         aula.setLocal(dto.getLocal());
         aula.setCapacidadeMaxima(dto.getCapacidadeMaxima());
-        aula.setValorHora(dto.getValorHora());
+
 
         return aula;
     }
 
-
-    // Entidade -> DTO de Resposta
+    // =========================
+    // ENTITY -> DTO RESPONSE
+    // =========================
     public static AulaResponseDTO toResponseDto(Aula aula) {
+
         AulaResponseDTO dto = new AulaResponseDTO();
 
         // Aula
@@ -36,15 +41,13 @@ public class AulaMapper {
         dto.setCapacidadeMaxima(aula.getCapacidadeMaxima());
 
         // Professor
-        // Professor
         if (aula.getProfessor() != null) {
             dto.setIdProfessor(aula.getProfessor().getId());
             dto.setNomeProfessor(aula.getProfessor().getNome());
         }
 
-        // Valor da aula vem da AULA, não do professor
+        // Valor da aula (já persistido na entidade)
         dto.setValorHora(aula.getValorHora());
-
 
         // Matéria
         if (aula.getMateria() != null) {
@@ -53,16 +56,18 @@ public class AulaMapper {
             dto.setDescricaoMateria(aula.getMateria().getDescricao());
         }
 
-        // VAGAS EM TEMPO REAL
-        int totalAlunos = aula.getAlunos() != null ? aula.getAlunos().size() : 0;
-        int capacidade = aula.getCapacidadeMaxima() != null ? aula.getCapacidadeMaxima() : 0;
+        // Vagas em tempo real
+        int totalAlunos = aula.getAlunos() != null
+                ? aula.getAlunos().size()
+                : 0;
+
+        int capacidade = aula.getCapacidadeMaxima() != null
+                ? aula.getCapacidadeMaxima()
+                : 0;
 
         dto.setTotalAlunos(totalAlunos);
         dto.setVagasDisponiveis(capacidade - totalAlunos);
 
         return dto;
     }
-
-
-
 }

@@ -1,6 +1,5 @@
 package com.InAula.InAula.controller;
 
-
 import com.InAula.InAula.RequestDTO.MateriaRequestDTO;
 import com.InAula.InAula.ResponseDTO.MateriaResponseDTO;
 import com.InAula.InAula.service.materia.MateriaService;
@@ -18,34 +17,34 @@ public class MateriaController {
     @Autowired
     private MateriaService materiaService;
 
-    @PostMapping
-    public MateriaResponseDTO criar(@Valid @RequestBody MateriaRequestDTO dto) {
-        return materiaService.criar(dto);
+
+
+    // Criar matéria para o professor logado
+    @PostMapping("/professor/me")
+    public MateriaResponseDTO criarMateriaProfessorLogado(
+            @Valid @RequestBody MateriaRequestDTO dto) {
+
+        return materiaService.criarMateriaProfessorLogado(dto);
     }
 
-    @GetMapping
-    public List<MateriaResponseDTO> listarTodos() {
-        return materiaService.listarTodos();
+    // Listar matérias do professor logado
+    @GetMapping("/professor/me")
+    public List<MateriaResponseDTO> listarMateriasProfessorLogado() {
+        return materiaService.listarMateriasProfessorLogado();
     }
 
-    @GetMapping("/{id}")
-    public MateriaResponseDTO buscarPorId(@PathVariable Long id) {
-        return materiaService.buscarPorId(id);
+    // Atualizar matéria do professor logado
+    @PutMapping("/professor/me/{id}")
+    public MateriaResponseDTO atualizarMateriaProfessorLogado(
+            @PathVariable Long id,
+            @RequestBody MateriaRequestDTO dto) {
+
+        return materiaService.atualizarMateriaProfessorLogado(id, dto);
     }
 
-    @PutMapping("/{id}")
-    public MateriaResponseDTO atualizar(@PathVariable Long id,
-                                        @RequestBody MateriaRequestDTO dto) {
-        return materiaService.atualizar(id, dto);
+    // Deletar matéria do professor logado
+    @DeleteMapping("/professor/me/{id}")
+    public void deletarMateriaProfessorLogado(@PathVariable Long id) {
+        materiaService.deletarMateriaProfessorLogado(id);
     }
-
-    @DeleteMapping("/{id}")
-    public void deletar(@PathVariable Long id) {
-        materiaService.deletar(id);
-    }
-
-
-
-
-
 }

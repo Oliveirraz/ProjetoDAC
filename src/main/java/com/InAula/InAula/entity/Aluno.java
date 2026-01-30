@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,6 +34,7 @@ public class Aluno extends Usuario {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(()->"ROLE_ALUNO");
+        return List.of(new SimpleGrantedAuthority("ROLE_ALUNO"));
     }
+
 }

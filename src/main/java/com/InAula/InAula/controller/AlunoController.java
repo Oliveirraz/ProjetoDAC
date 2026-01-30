@@ -1,13 +1,14 @@
 package com.InAula.InAula.controller;
 
-import com.InAula.InAula.RequestDTO.LoginRequestDTO;
-import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import com.InAula.InAula.RequestDTO.AlunoRequestDTO;
 import com.InAula.InAula.ResponseDTO.AlunoResponseDTO;
+import com.InAula.InAula.entity.Aluno;
+import com.InAula.InAula.entity.Aula;
 import com.InAula.InAula.service.materia.aluno.AlunoService;
-
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,13 +16,12 @@ import java.util.List;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("alunos")
+@RequestMapping("/alunos")
 public class AlunoController {
 
     @Autowired
     private AlunoService alunoService;
 
-    // Criando o Aluno agora com foto
     @PostMapping(consumes = {"multipart/form-data"})
     public AlunoResponseDTO criarAluno(
             @Valid
@@ -31,36 +31,47 @@ public class AlunoController {
         return alunoService.criarAluno(alunoDTO, foto);
     }
 
-    // Listo os alunos.
-    @GetMapping
-    public List<AlunoResponseDTO> listarTodosAlunos() {
-        return alunoService.listarTodos();
+    // ==========================
+    // 🔐 USUÁRIO LOGADO ( /me )
+    // ==========================
+
+
+    @GetMapping("/me")
+    public AlunoResponseDTO alunoLogado(Authentication authentication) {
+
+        // O principal é um Usuario (pai de Aluno)
+        String email = authentication.getName();
+
+        // Delegamos tudo para o service
+        return alunoService.buscarAlunoLogado(email);
     }
 
-    // Busco os alunos.
-    @GetMapping("{id}")
-    public AlunoResponseDTO buscarPorId(@PathVariable Long id) {
-        return alunoService.buscarPorId(id);
-    }
 
-    // Atualizo o aluno, mas sem atualizar a foto.
-    @PutMapping("{id}")
-    public AlunoResponseDTO atualizarAluno(
-            @PathVariable Long id,
-            @RequestBody AlunoRequestDTO alunoRequestDTO
+    @PutMapping(
+            value = "/me",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public AlunoResponseDTO atualizarMinhaConta(
+            Authentication authentication,
+
+            @RequestPart("aluno") AlunoRequestDTO alunoDTO,
+            @RequestPart(value = "foto", required = false) MultipartFile foto
     ) {
-        return alunoService.atualizarAluno(id, alunoRequestDTO);
+
+        Aluno aluno = (Aluno) authentication.getPrincipal();
+
+        return alunoService.atualizarAluno(
+                aluno.getId(),
+                alunoDTO,
+                foto
+        );
     }
 
-    // Deleto o aluno.
-    @DeleteMapping("{id}")
-    public void deletarAluno(@PathVariable Long id) {
-        alunoService.deletarAluno(id);
-    }
 
-    @PostMapping("/login")
-    public AlunoResponseDTO login(@Valid @RequestBody LoginRequestDTO loginDTO) {
-        return alunoService.login(loginDTO);
+    @DeleteMapping("/me")
+    public void deletarMinhaConta(Authentication authentication) {
+        Aluno aluno = (Aluno) authentication.getPrincipal();
+        alunoService.deletarAluno(aluno.getId());
     }
 
 }

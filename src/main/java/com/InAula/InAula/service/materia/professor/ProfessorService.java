@@ -4,15 +4,11 @@ import com.InAula.InAula.RequestDTO.ProfessorRequestDTO;
 import com.InAula.InAula.ResponseDTO.MateriaResponseDTO;
 import com.InAula.InAula.ResponseDTO.ProfessorResponseDTO;
 import com.InAula.InAula.entity.Aula;
-import com.InAula.InAula.entity.Materia;
 import com.InAula.InAula.entity.Professor;
 import com.InAula.InAula.exception.ResourceNotFoundException;
 import com.InAula.InAula.repository.MateriaRepository;
 import com.InAula.InAula.repository.ProfessorRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,7 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ProfessorService implements UserDetailsService {
+public class ProfessorService {
 
     private final ProfessorRepository professorRepository;
     private final MateriaRepository materiaRepository;
@@ -84,38 +80,6 @@ public class ProfessorService implements UserDetailsService {
     }
 
 
-    // ATUALIZAR PROFESSOR
-    public ProfessorResponseDTO atualizarProfessor(Long id, ProfessorRequestDTO dto) {
-
-        Professor professor = professorRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Professor não encontrado"));
-
-        if (dto.nome() != null) professor.setNome(dto.nome());
-        if (dto.email() != null) professor.setEmail(dto.email());
-        if (dto.senha() != null && !dto.senha().isBlank()) professor.setSenha(dto.senha());
-
-        // Proteção simples de regra
-        if (dto.perfil() != null && !dto.perfil().equalsIgnoreCase("Professor")) {
-            throw new IllegalArgumentException(
-                    "Perfil inválido. Professor não pode ter outro perfil.");
-        }
-
-        if (dto.valorHoraAula() != null) professor.setValorHoraAula(dto.valorHoraAula());
-        if (dto.foto() != null) professor.setFoto(dto.foto());
-
-        if (dto.materiasIds() != null) {
-            if (!dto.materiasIds().isEmpty()) {
-                List<Materia> materias = materiaRepository.findAllById(dto.materiasIds());
-                professor.setMaterias(materias);
-            } else {
-                professor.getMaterias().clear();
-            }
-        }
-
-        Professor atualizado = professorRepository.save(professor);
-        return toResponseDTO(atualizado);
-    }
 
 
     // DELETAR PROFESSOR
@@ -193,11 +157,46 @@ public class ProfessorService implements UserDetailsService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Professor professor = professorRepository.findByEmail(email)
-                .orElseThrow(()->
-                        new UsernameNotFoundException("Professor não encontrado com email: " + email));
-        return professor;
+
+    public ProfessorResponseDTO atualizarProfessor(
+            Long id,
+            ProfessorRequestDTO dto,
+            MultipartFile foto
+    ) throws IOException {
+
+        Professor professor = professorRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Professor não encontrado")
+                );
+
+        if (dto.nome() != null && !dto.nome().isBlank()) {
+            professor.setNome(dto.nome());
+        }
+
+        if (dto.valorHoraAula() != null) {
+            professor.setValorHoraAula(dto.valorHoraAula());
+        }
+
+        if (foto != null && !foto.isEmpty()) {
+            professor.setFoto(salvarFotoNoDisco(foto));
+        }
+
+        Professor atualizado = professorRepository.save(professor);
+        return toResponseDTO(atualizado);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

@@ -14,6 +14,8 @@ import com.InAula.InAula.repository.MateriaRepository;
 import com.InAula.InAula.repository.ProfessorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,14 +34,26 @@ public class AulaService {
     private final AlunoRepository alunoRepository;
 
 
-    // CRIAR AULA
-    @Transactional
-    public AulaResponseDTO salvarAula(AulaRequestDTO dto) {
+    private Professor getProfessorLogado() {
 
-        // valida horário + duração mínima
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String email = authentication.getName();
+
+        return professorRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Professor logado não encontrado"));
+    }
+
+
+    @Transactional
+    public AulaResponseDTO salvarAulaProfessorLogado(AulaRequestDTO dto) {
+
         validarHorario(dto);
 
-        Professor professor = buscarProfessor(dto.getIdProfessor());
+        Professor professor = getProfessorLogado();
         Materia materia = buscarMateria(dto.getIdMateria());
 
         validarProfessorMateria(professor, materia);
@@ -55,6 +69,110 @@ public class AulaService {
 
         return AulaMapper.toResponseDto(aulaRepository.save(aula));
     }
+
+
+
+    @Transactional(readOnly = true)
+    public Page<AulaResponseDTO> listarAulasProfessorLogado(int page, int size) {
+
+        Professor professor = getProfessorLogado();
+        Pageable pageable = PageRequest.of(page, size);
+
+        return aulaRepository.findByProfessor_Id(
+                professor.getId(), pageable
+        ).map(AulaMapper::toResponseDto);
+    }
+
+
+
+    @Transactional(readOnly = true)
+    public AulaResponseDTO buscarAulaProfessorLogadoPorId(Long aulaId) {
+
+        Professor professor = getProfessorLogado();
+
+        Aula aula = aulaRepository.findById(aulaId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Aula não encontrada com ID: " + aulaId));
+
+        if (!aula.getProfessor().getId().equals(professor.getId())) {
+            throw new IllegalArgumentException(
+                    "Você não tem permissão para acessar esta aula");
+        }
+
+        return AulaMapper.toResponseDto(aula);
+    }
+
+
+    @Transactional
+    public AulaResponseDTO atualizarAulaProfessorLogado(
+            Long aulaId, AulaRequestDTO dto) {
+
+        Professor professor = getProfessorLogado();
+
+        Aula aula = aulaRepository.findById(aulaId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Aula não encontrada com ID: " + aulaId));
+
+        if (!aula.getProfessor().getId().equals(professor.getId())) {
+            throw new IllegalArgumentException(
+                    "Você não pode atualizar esta aula");
+        }
+
+        validarHorarioAtualizacao(aula, dto);
+
+        if (dto.getData() != null) aula.setData(dto.getData());
+        if (dto.getHoraInicio() != null) aula.setHoraInicio(dto.getHoraInicio());
+        if (dto.getHoraFim() != null) aula.setHoraFim(dto.getHoraFim());
+
+        if (dto.getLocal() != null && !dto.getLocal().isBlank()) {
+            aula.setLocal(dto.getLocal());
+        }
+
+        if (dto.getCapacidadeMaxima() != null) {
+            aula.setCapacidadeMaxima(dto.getCapacidadeMaxima());
+        }
+
+        if (dto.getIdMateria() != null) {
+            Materia materia = buscarMateria(dto.getIdMateria());
+            validarProfessorMateria(professor, materia);
+            aula.setMateria(materia);
+        }
+
+        if (dto.getAlunosIds() != null) {
+            List<Aluno> alunos = buscarAlunos(dto.getAlunosIds());
+            validarCapacidade(alunos.size(), aula.getCapacidadeMaxima());
+            aula.setAlunos(alunos);
+        }
+
+        return AulaMapper.toResponseDto(aulaRepository.save(aula));
+    }
+
+
+    @Transactional
+    public void deletarAulaProfessorLogado(Long aulaId) {
+
+        Professor professor = getProfessorLogado();
+
+        Aula aula = aulaRepository.findById(aulaId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Aula não encontrada com ID: " + aulaId));
+
+        if (!aula.getProfessor().getId().equals(professor.getId())) {
+            throw new IllegalArgumentException(
+                    "Você não pode deletar esta aula");
+        }
+
+        aulaRepository.delete(aula);
+    }
+
+
+
+
+    // Aulas com ID
+
 
 
     // BUSCAR AULA POR ID
@@ -108,50 +226,6 @@ public class AulaService {
         return aulas.map(AulaMapper::toResponseDto);
     }
 
-
-    // ATUALIZAR AULA - PATCH
-    @Transactional
-    public AulaResponseDTO atualizar(Long id, AulaRequestDTO dto) {
-
-        Aula aula = aulaRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Aula não encontrada com ID: " + id));
-
-        // valida horário considerando valores antigos + novos
-        validarHorarioAtualizacao(aula, dto);
-
-        if (dto.getData() != null) aula.setData(dto.getData());
-        if (dto.getHoraInicio() != null) aula.setHoraInicio(dto.getHoraInicio());
-        if (dto.getHoraFim() != null) aula.setHoraFim(dto.getHoraFim());
-
-        if (dto.getLocal() != null && !dto.getLocal().isBlank()) {
-            aula.setLocal(dto.getLocal());
-        }
-
-        if (dto.getCapacidadeMaxima() != null) {
-            aula.setCapacidadeMaxima(dto.getCapacidadeMaxima());
-        }
-
-        if (dto.getValorHora() != null) {
-            aula.setValorHora(dto.getValorHora());
-        }
-
-        if (dto.getIdProfessor() != null) {
-            aula.setProfessor(buscarProfessor(dto.getIdProfessor()));
-        }
-
-        if (dto.getIdMateria() != null) {
-            aula.setMateria(buscarMateria(dto.getIdMateria()));
-        }
-
-        if (dto.getAlunosIds() != null) {
-            List<Aluno> alunos = buscarAlunos(dto.getAlunosIds());
-            validarCapacidade(alunos.size(), aula.getCapacidadeMaxima());
-            aula.setAlunos(alunos);
-        }
-
-        return AulaMapper.toResponseDto(aulaRepository.save(aula));
-    }
 
 
     // DELETAR AULA

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ public class Professor extends Usuario {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(()->"ROLE_PROFESSOR");
+        return List.of(new SimpleGrantedAuthority("ROLE_PROFESSOR"));
     }
+
 }

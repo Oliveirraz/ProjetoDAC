@@ -15,18 +15,29 @@ public class TokenService {
 
     private static final String SECRET = "enAula-secret-key";
 
-    public String gerarToken(Usuario usuario){
+    public String gerarToken(Usuario usuario) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(SECRET);
 
             return JWT.create()
                     .withSubject(usuario.getEmail())
+
+                    .withClaim(
+                            "roles",
+                            usuario.getAuthorities()
+                                    .stream()
+                                    .map(authority -> authority.getAuthority())
+                                    .toList()
+                    )
+
                     .withExpiresAt(gerarDataExpiracao())
                     .sign(algorithm);
-        }catch (Exception e){
-            throw new RuntimeException("Erro ao gerar token JWT");
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao gerar token JWT", e);
         }
     }
+
 
     public String validarToken(String token){
         try {
