@@ -13,7 +13,7 @@ import java.time.ZoneOffset;
 @Service
 public class TokenService {
 
-    private static final String SECRET = "enAula-secret-key";
+    private static final String SECRET = "enAula-secret-key-2026";
 
     public String gerarToken(Usuario usuario) {
         try {

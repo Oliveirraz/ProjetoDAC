@@ -36,6 +36,22 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
+    // 🌐 CORS (AQUI 👇)
+    @Bean
+    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+        var config = new org.springframework.web.cors.CorsConfiguration();
+
+        config.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
+        config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(java.util.List.of("*"));
+        config.setAllowCredentials(true);
+
+        var source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+
+        return source;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
@@ -49,42 +65,43 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // ENDPOINTS PÚBLICOS
+                        // PRE-FLIGHT
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Login (gera JWT)
+                        // 📸 IMAGENS
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+
+                        // LOGIN
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/professores/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/alunos/login").permitAll()
 
-                        // Cadastro inicial
-                        .requestMatchers(HttpMethod.POST, "/professores").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/alunos").permitAll()
+                        // CADASTRO
+                        .requestMatchers(HttpMethod.POST, "/api/professores").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/alunos").permitAll()
 
-                        // PROFESSOR (PRÓPRIA CONTA)
-                        .requestMatchers(HttpMethod.GET, "/professores/me").hasRole("PROFESSOR")
-                        .requestMatchers(HttpMethod.PUT, "/professores/me").hasRole("PROFESSOR")
-                        .requestMatchers(HttpMethod.DELETE, "/professores/me").hasRole("PROFESSOR")
+                        // PROFESSOR
+                        .requestMatchers(HttpMethod.GET, "/api/professores/me").hasRole("PROFESSOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/professores/me").hasRole("PROFESSOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/professores/me").hasRole("PROFESSOR")
 
-                        // ALUNO (PRÓPRIA CONTA)
-                        .requestMatchers(HttpMethod.GET, "/alunos/me").hasRole("ALUNO")
-                        .requestMatchers(HttpMethod.PUT, "/alunos/me").hasRole("ALUNO")
-                        .requestMatchers(HttpMethod.DELETE, "/alunos/me").hasRole("ALUNO")
+                        // ALUNO
+                        .requestMatchers(HttpMethod.GET, "/api/alunos/me").hasRole("ALUNO")
+                        .requestMatchers(HttpMethod.PUT, "/api/alunos/me").hasRole("ALUNO")
+                        .requestMatchers(HttpMethod.DELETE, "/api/alunos/me").hasRole("ALUNO")
 
-                        // REGRAS DE NEGÓCIO
+                        // AULAS
+                        .requestMatchers(HttpMethod.POST, "/api/aulas").hasRole("PROFESSOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/aulas/**").hasRole("PROFESSOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/aulas/**").hasRole("PROFESSOR")
 
-                        // Aulas → só professor
-                        .requestMatchers(HttpMethod.POST, "/aulas").hasRole("PROFESSOR")
-                        .requestMatchers(HttpMethod.PUT, "/aulas/**").hasRole("PROFESSOR")
-                        .requestMatchers(HttpMethod.DELETE, "/aulas/**").hasRole("PROFESSOR")
+                        // MATÉRIAS
+                        .requestMatchers(HttpMethod.POST, "/api/materias").hasRole("PROFESSOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/materias/**").hasRole("PROFESSOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/materias/**").hasRole("PROFESSOR")
 
-                        // Matérias → só professor
-                        .requestMatchers(HttpMethod.POST, "/materias").hasRole("PROFESSOR")
-                        .requestMatchers(HttpMethod.PUT, "/materias/**").hasRole("PROFESSOR")
-                        .requestMatchers(HttpMethod.DELETE, "/materias/**").hasRole("PROFESSOR")
-
-                        // Qualquer outra rota exige login
                         .anyRequest().authenticated()
                 )
+
+
 
                 .addFilterBefore(
                         jwtAuthenticationFilter,

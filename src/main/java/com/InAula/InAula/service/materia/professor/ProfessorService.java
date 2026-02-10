@@ -39,9 +39,11 @@ public class ProfessorService {
         Professor professor = new Professor();
         professor.setNome(dto.nome());
         professor.setEmail(dto.email());
+
+        // 🔐 SENHA CRIPTOGRAFADA (ESSENCIAL PARA O LOGIN)
         professor.setSenha(passwordEncoder.encode(dto.senha()));
 
-        //Perfil fixo
+        // Perfil fixo
         professor.setPerfil("Professor");
 
         if (dto.valorHoraAula() != null) {
@@ -61,6 +63,7 @@ public class ProfessorService {
         Professor salvo = professorRepository.save(professor);
         return toResponseDTO(salvo);
     }
+
 
     // LISTAR PROFESSORES
     public List<ProfessorResponseDTO> listarTodos() {
@@ -177,6 +180,11 @@ public class ProfessorService {
             professor.setValorHoraAula(dto.valorHoraAula());
         }
 
+        // 🔐 SENHA (CRÍTICO)
+        if (dto.senha() != null && !dto.senha().isBlank()) {
+            professor.setSenha(passwordEncoder.encode(dto.senha()));
+        }
+
         if (foto != null && !foto.isEmpty()) {
             professor.setFoto(salvarFotoNoDisco(foto));
         }
@@ -184,6 +192,7 @@ public class ProfessorService {
         Professor atualizado = professorRepository.save(professor);
         return toResponseDTO(atualizado);
     }
+
 
 
 
