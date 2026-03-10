@@ -33,6 +33,8 @@ public class AulaRequestDTO {
     @NotBlank(message = "O local da aula é obrigatório")
     private String local;
 
+    private BigDecimal valorHora;
+
     @NotNull(message = "A matéria é obrigatória")
     private Long idMateria;
 

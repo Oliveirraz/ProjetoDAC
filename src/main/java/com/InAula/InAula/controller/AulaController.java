@@ -15,7 +15,7 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/aulas")
+@RequestMapping("api/aulas")
 public class AulaController {
 
     private final AulaService aulaService;
@@ -72,6 +72,16 @@ public class AulaController {
         return ResponseEntity.noContent().build();
     }
 
+    // Listar aulas para os alunos (paginado + busca)
+    @GetMapping
+    public ResponseEntity<Page<AulaResponseDTO>> listarAulas(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(required = false) String termo) {
+
+        return ResponseEntity.ok(
+                aulaService.buscarPorMateriaOuProfessor(termo, page, size));
+    }
 
 
 }

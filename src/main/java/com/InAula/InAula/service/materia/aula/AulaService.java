@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,7 +66,10 @@ public class AulaService {
         aula.setProfessor(professor);
         aula.setMateria(materia);
         aula.setAlunos(alunos);
-        aula.setValorHora(professor.getValorHoraAula());
+        BigDecimal valorHora = professor.getValorHoraAula() != null
+                ? professor.getValorHoraAula()
+                : BigDecimal.ZERO;
+        aula.setValorHora(valorHora);
 
         return AulaMapper.toResponseDto(aulaRepository.save(aula));
     }
