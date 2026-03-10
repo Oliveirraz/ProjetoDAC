@@ -149,6 +149,10 @@ public class AulaService {
             validarCapacidade(alunos.size(), aula.getCapacidadeMaxima());
             aula.setAlunos(alunos);
         }
+        // adicione junto com os outros ifs de atualização:
+        if (dto.getValorHora() != null) {
+            aula.setValorHora(dto.getValorHora());
+        }
 
         return AulaMapper.toResponseDto(aulaRepository.save(aula));
     }
