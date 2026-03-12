@@ -32,7 +32,7 @@ public class AlunoController {
     }
 
     // ==========================
-    // 🔐 USUÁRIO LOGADO ( /me )
+    //  USUÁRIO LOGADO ( /me )
     // ==========================
 
 

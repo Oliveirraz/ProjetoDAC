@@ -36,7 +36,7 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    // 🌐 CORS (AQUI 👇)
+    // CORS
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         var config = new org.springframework.web.cors.CorsConfiguration();
@@ -67,8 +67,9 @@ public class SecurityConfig {
 
                         // PRE-FLIGHT
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/professores/*").authenticated()
 
-                        // 📸 IMAGENS
+                        // IMAGENS
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
 
                         // LOGIN
@@ -87,7 +88,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/alunos/me").hasRole("ALUNO")
                         .requestMatchers(HttpMethod.PUT, "/api/alunos/me").hasRole("ALUNO")
                         .requestMatchers(HttpMethod.DELETE, "/api/alunos/me").hasRole("ALUNO")
-
+                        .requestMatchers(HttpMethod.POST, "/api/aulas/*/matricular").hasRole("ALUNO")
+                        .requestMatchers(HttpMethod.GET, "/api/aulas/aluno").hasRole("ALUNO")
                         // AULAS
                         .requestMatchers(HttpMethod.POST, "/api/aulas").hasRole("PROFESSOR")
                         .requestMatchers(HttpMethod.PUT, "/api/aulas/**").hasRole("PROFESSOR")

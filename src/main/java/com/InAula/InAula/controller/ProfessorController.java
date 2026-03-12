@@ -7,6 +7,7 @@ import com.InAula.InAula.entity.Professor;
 import com.InAula.InAula.service.materia.professor.ProfessorService;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,7 +27,7 @@ public class ProfessorController {
     }
 
     // ==========================
-    // 🔐 PROFESSOR LOGADO ( /me )
+    //  PROFESSOR LOGADO ( /me )
     // ==========================
 
    @GetMapping("/me")
@@ -69,7 +70,7 @@ public class ProfessorController {
     }
 
     // ==========================
-    // 🔓 CADASTRO / 🔒 ADMIN
+    //  CADASTRO /  ADMIN
     // ==========================
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -79,6 +80,12 @@ public class ProfessorController {
             @RequestPart(value = "foto", required = false) MultipartFile foto
     ) {
         return professorService.criarProfessor(dto, foto);
+    }
+
+    // Perfil público do professor (visível para alunos)
+    @GetMapping("/{id}")
+    public ResponseEntity<ProfessorResponseDTO> buscarPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(professorService.buscarPorId(id));
     }
 
 

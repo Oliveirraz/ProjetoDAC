@@ -48,6 +48,37 @@ public class AulaService {
                                 "Professor logado não encontrado"));
     }
 
+    private Aluno getAlunoLogado() {
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        return alunoRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Aluno logado não encontrado"));
+    }
+
+    // Novo método de matrícula pelo token
+    @Transactional
+    public AulaResponseDTO matricularAlunoLogado(Long aulaId) {
+        Aluno aluno = getAlunoLogado();
+
+        Aula aula = aulaRepository.findById(aulaId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Aula não encontrada com ID: " + aulaId));
+
+        if (aula.getAlunos().contains(aluno)) {
+            throw new IllegalArgumentException("Aluno já está matriculado nesta aula");
+        }
+
+        if (aula.getAlunos().size() >= aula.getCapacidadeMaxima()) {
+            throw new IllegalArgumentException("Não há vagas disponíveis nesta aula");
+        }
+
+        aula.getAlunos().add(aluno);
+        return AulaMapper.toResponseDto(aulaRepository.save(aula));
+    }
+
+
 
     @Transactional
     public AulaResponseDTO salvarAulaProfessorLogado(AulaRequestDTO dto) {
@@ -66,9 +97,10 @@ public class AulaService {
         aula.setProfessor(professor);
         aula.setMateria(materia);
         aula.setAlunos(alunos);
-        BigDecimal valorHora = professor.getValorHoraAula() != null
-                ? professor.getValorHoraAula()
-                : BigDecimal.ZERO;
+        // ✅ prioriza o valor enviado pelo frontend, com fallback para o perfil do professor
+        BigDecimal valorHora = (dto.getValorHora() != null && dto.getValorHora().compareTo(BigDecimal.ZERO) > 0)
+                ? dto.getValorHora()
+                : (professor.getValorHoraAula() != null ? professor.getValorHoraAula() : BigDecimal.ZERO);
         aula.setValorHora(valorHora);
 
         return AulaMapper.toResponseDto(aulaRepository.save(aula));
@@ -176,10 +208,6 @@ public class AulaService {
         aulaRepository.delete(aula);
     }
 
-
-
-
-    // Aulas com ID
 
 
 
@@ -412,6 +440,15 @@ public class AulaService {
                     "O horário da aula deve ter no mínimo 1 hora de duração"
             );
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<AulaResponseDTO> listarAulasAlunoLogado() {
+        Aluno aluno = getAlunoLogado();
+        return aulaRepository.buscarAulasDoAluno(aluno.getId())
+                .stream()
+                .map(AulaMapper::toResponseDto)
+                .collect(Collectors.toList());
     }
 
 }

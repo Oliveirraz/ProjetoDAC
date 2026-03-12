@@ -2,9 +2,11 @@ package com.InAula.InAula.controller;
 
 import com.InAula.InAula.RequestDTO.AulaRequestDTO;
 import com.InAula.InAula.ResponseDTO.AulaResponseDTO;
+import com.InAula.InAula.entity.Aluno;
 import com.InAula.InAula.service.materia.aula.AulaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -81,6 +83,20 @@ public class AulaController {
 
         return ResponseEntity.ok(
                 aulaService.buscarPorMateriaOuProfessor(termo, page, size));
+    }
+
+    // Matricular aluno logado em uma aula
+    @PostMapping("/{aulaId}/matricular")
+    public ResponseEntity<AulaResponseDTO> matricularAlunoLogado(
+            @PathVariable Long aulaId) {
+
+        return ResponseEntity.ok(aulaService.matricularAlunoLogado(aulaId));
+    }
+
+    // Listar aulas do aluno logado
+    @GetMapping("/aluno")
+    public ResponseEntity<List<AulaResponseDTO>> listarAulasAlunoLogado() {
+        return ResponseEntity.ok(aulaService.listarAulasAlunoLogado());
     }
 
 

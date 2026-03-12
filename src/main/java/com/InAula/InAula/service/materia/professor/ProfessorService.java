@@ -40,7 +40,7 @@ public class ProfessorService {
         professor.setNome(dto.nome());
         professor.setEmail(dto.email());
 
-        // 🔐 SENHA CRIPTOGRAFADA (ESSENCIAL PARA O LOGIN)
+        // SENHA CRIPTOGRAFADA (ESSENCIAL PARA O LOGIN)
         professor.setSenha(passwordEncoder.encode(dto.senha()));
 
         // Perfil fixo
@@ -180,7 +180,7 @@ public class ProfessorService {
             professor.setValorHoraAula(dto.valorHoraAula());
         }
 
-        // 🔐 SENHA (CRÍTICO)
+        // SENHA (CRÍTICO)
         if (dto.senha() != null && !dto.senha().isBlank()) {
             professor.setSenha(passwordEncoder.encode(dto.senha()));
         }
