@@ -83,24 +83,6 @@ public class AlunoService {
     }
 
 
-    public List<AlunoResponseDTO> listarTodos() {
-        return alunoRepository.findAll()
-                .stream()
-                .map(this::toResponseDTO)
-                .toList();
-    }
-
-
-    public AlunoResponseDTO buscarPorId(Long id) {
-        Aluno aluno = alunoRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Aluno não encontrado")
-                );
-
-        return toResponseDTO(aluno);
-    }
-
-
     @Transactional(readOnly = true)
     public AlunoResponseDTO buscarAlunoLogado(String email) {
 

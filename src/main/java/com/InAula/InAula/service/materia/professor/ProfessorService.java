@@ -65,23 +65,6 @@ public class ProfessorService {
     }
 
 
-    // LISTAR PROFESSORES
-    public List<ProfessorResponseDTO> listarTodos() {
-        return professorRepository.findAll()
-                .stream()
-                .map(this::toResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-
-    // BUSCAR POR ID
-    public ProfessorResponseDTO buscarPorId(Long id) {
-        Professor professor = professorRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Professor não encontrado"));
-        return toResponseDTO(professor);
-    }
-
 
 
 
@@ -143,22 +126,6 @@ public class ProfessorService {
     }
 
 
-    // LISTAR MATÉRIAS DO PROFESSOR
-    public List<MateriaResponseDTO> listarMateriasDoProfessor(Long professorId) {
-
-        Professor professor = professorRepository.findById(professorId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Professor não encontrado"));
-
-        return professor.getMaterias()
-                .stream()
-                .map(m -> new MateriaResponseDTO(
-                        m.getId(),
-                        m.getNome(),
-                        m.getDescricao()
-                ))
-                .collect(Collectors.toList());
-    }
 
 
     public ProfessorResponseDTO atualizarProfessor(

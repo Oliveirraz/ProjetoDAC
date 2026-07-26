@@ -82,11 +82,7 @@ public class ProfessorController {
         return professorService.criarProfessor(dto, foto);
     }
 
-    // Perfil público do professor (visível para alunos)
-    @GetMapping("/{id}")
-    public ResponseEntity<ProfessorResponseDTO> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(professorService.buscarPorId(id));
-    }
+
 
 
 }

@@ -23,14 +23,7 @@ public class Aluno extends Usuario {
     @ManyToMany(mappedBy = "alunos")
     private List<Aula> aulas = new ArrayList<>();
 
-    // Relação Morta pois agora o aluno se relaciona diretamento com aula.
-    @ManyToMany
-    @JoinTable(
-            name = "aluno_materia",
-            joinColumns = @JoinColumn(name = "aluno_id"),
-            inverseJoinColumns = @JoinColumn(name = "materia_id")
-    )
-    private List<Materia> materias = new ArrayList<>();
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

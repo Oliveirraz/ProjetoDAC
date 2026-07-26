@@ -97,7 +97,7 @@ public class AulaService {
         aula.setProfessor(professor);
         aula.setMateria(materia);
         aula.setAlunos(alunos);
-        // ✅ prioriza o valor enviado pelo frontend, com fallback para o perfil do professor
+        //  prioriza o valor enviado pelo frontend, com fallback para o perfil do professor
         BigDecimal valorHora = (dto.getValorHora() != null && dto.getValorHora().compareTo(BigDecimal.ZERO) > 0)
                 ? dto.getValorHora()
                 : (professor.getValorHoraAula() != null ? professor.getValorHoraAula() : BigDecimal.ZERO);
@@ -176,7 +176,7 @@ public class AulaService {
             aula.setMateria(materia);
         }
 
-        if (dto.getAlunosIds() != null) {
+        if (dto.getAlunosIds() != null && !dto.getAlunosIds().isEmpty()) {
             List<Aluno> alunos = buscarAlunos(dto.getAlunosIds());
             validarCapacidade(alunos.size(), aula.getCapacidadeMaxima());
             aula.setAlunos(alunos);
@@ -209,40 +209,6 @@ public class AulaService {
     }
 
 
-
-
-    // BUSCAR AULA POR ID
-    @Transactional(readOnly = true)
-    public AulaResponseDTO buscarPorId(Long id) {
-
-        Aula aula = aulaRepository.findById(id)
-                // Erro 404: recurso não encontrado
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Aula não encontrada com ID: " + id));
-
-        return AulaMapper.toResponseDto(aula);
-    }
-
-    // LISTAR TODAS - SEM PAGINAÇÃO
-    @Transactional(readOnly = true)
-    public List<AulaResponseDTO> listarTodos() {
-
-        return aulaRepository.findAll()
-                .stream()
-                .map(AulaMapper::toResponseDto)
-                .collect(Collectors.toList());
-    }
-
-    // LISTAR TODAS - COM PAGINAÇÃO
-    @Transactional(readOnly = true)
-    public Page<AulaResponseDTO> listarTodosPaginado(int page, int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-
-        return aulaRepository.findAll(pageable)
-                .map(AulaMapper::toResponseDto);
-    }
-
     // BUSCA POR MATÉRIA OU PROFESSOR - COM FILTRO
     @Transactional(readOnly = true)
     public Page<AulaResponseDTO> buscarPorMateriaOuProfessor(
@@ -260,35 +226,6 @@ public class AulaService {
                 : aulaRepository.buscarPorMateriaOuProfessor(termo, pageable);
 
         return aulas.map(AulaMapper::toResponseDto);
-    }
-
-
-
-    // DELETAR AULA
-    @Transactional
-    public void deletar(Long id) {
-
-        if (!aulaRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Aula não encontrada com ID: " + id);
-        }
-
-        aulaRepository.deleteById(id);
-    }
-
-    // LISTAR AULAS POR PROFESSOR
-    @Transactional(readOnly = true)
-    public Page<AulaResponseDTO> listarPorProfessorPaginado(
-            Long professorId, int page, int size) {
-
-        if (!professorRepository.existsById(professorId)) {
-            throw new ResourceNotFoundException(
-                    "Professor não encontrado com ID: " + professorId);
-        }
-
-        Pageable pageable = PageRequest.of(page, size);
-
-        return aulaRepository.findByProfessor_Id(professorId, pageable)
-                .map(AulaMapper::toResponseDto);
     }
 
 
@@ -362,14 +299,6 @@ public class AulaService {
         }
     }
 
-
-    // Busca professor ou lança 404 CASO O PROFESSOR NÃO EXISTA
-    private Professor buscarProfessor(Long id) {
-        return professorRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Professor não encontrado com ID: " + id));
-    }
 
     //Busca matéria ou lança 404 -  CASO A MATÉRIA NÃO EXISTA
     private Materia buscarMateria(Long id) {

@@ -4,8 +4,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-import java.util.List;
-
 //O Request representa o formato dos dados que a minha API espera receber.
 //Ela contém somente os campos necessários para o cadastro.
 public record AlunoRequestDTO(
@@ -20,10 +18,8 @@ public record AlunoRequestDTO(
 
         @NotBlank(message = "A senha é obrigatória")
         @Size(min = 3, message = "A senha deve ter no mínimo 3 caracteres")
-        String senha,
+        String senha
 
-        List<Long> materiasIDs,
-
-        String foto) {
+        ) {
 
 }

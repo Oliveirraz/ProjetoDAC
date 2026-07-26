@@ -19,12 +19,6 @@ public record ProfessorRequestDTO(
         @Size(min = 3, message = "A senha deve ter no mínimo 3 caracteres")
         String senha,
 
-        String perfil,
-
         @PositiveOrZero(message = "O valor da hora aula deve ser positivo")
-        BigDecimal valorHoraAula,
-
-        List<Long> materiasIds,
-
-        String foto) {
+        BigDecimal valorHoraAula) {
 }
