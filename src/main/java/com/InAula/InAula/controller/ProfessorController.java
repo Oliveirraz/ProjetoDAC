@@ -82,6 +82,12 @@ public class ProfessorController {
         return professorService.criarProfessor(dto, foto);
     }
 
+    // Usado para pegar o pefil publico do professor
+    @GetMapping("/{id}")
+    public ProfessorResponseDTO buscarProfessorPorId(@PathVariable Long id) {
+        return professorService.buscarProfessorPorId(id);
+    }
+
 
 
 
