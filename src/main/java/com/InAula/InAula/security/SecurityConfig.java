@@ -100,6 +100,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/materias/**").hasRole("PROFESSOR")
                         .requestMatchers(HttpMethod.DELETE, "/api/materias/**").hasRole("PROFESSOR")
 
+                        // MATRICULAR
+                        .requestMatchers(HttpMethod.GET, "/api/matriculas/responder").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/matriculas/aulas/*/solicitar").hasRole("ALUNO")
+
                         .anyRequest().authenticated()
                 )
 
