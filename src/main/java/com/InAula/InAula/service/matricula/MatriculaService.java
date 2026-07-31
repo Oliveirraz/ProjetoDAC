@@ -99,4 +99,26 @@ public class MatriculaService {
         emailService.enviarConfirmacaoParaAluno(matricula);
         return "Matrícula aceita com sucesso! O aluno foi notificado por e-mail.";
     }
+
+    @Transactional
+    public void cancelarMatricula(Long aulaId) {
+        Aluno aluno = getAlunoLogado();
+
+        Matricula matricula = matriculaRepository
+                .findByAluno_IdAndAula_IdAndStatus(aluno.getId(), aulaId, MatriculaStatus.ACEITA)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Você não está matriculado nesta aula"));
+
+        Aula aula = matricula.getAula();
+
+        // remove o aluno da lista de alunos da aula (libera a vaga)
+        aula.getAlunos().remove(aluno);
+        aulaRepository.save(aula);
+
+        matricula.setStatus(MatriculaStatus.RECUSADA);
+        matricula.setDataResposta(LocalDateTime.now());
+        matriculaRepository.save(matricula);
+
+        emailService.enviarCancelamentoParaProfessor(matricula);
+    }
 }

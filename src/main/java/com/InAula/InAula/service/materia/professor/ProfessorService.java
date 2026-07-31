@@ -3,11 +3,13 @@ package com.InAula.InAula.service.materia.professor;
 import com.InAula.InAula.RequestDTO.ProfessorRequestDTO;
 import com.InAula.InAula.ResponseDTO.MateriaResponseDTO;
 import com.InAula.InAula.ResponseDTO.ProfessorResponseDTO;
-import com.InAula.InAula.entity.Aula;
-import com.InAula.InAula.entity.Professor;
+import com.InAula.InAula.entity.*;
 import com.InAula.InAula.exception.ResourceNotFoundException;
+import com.InAula.InAula.repository.AulaRepository;
 import com.InAula.InAula.repository.MateriaRepository;
+import com.InAula.InAula.repository.MatriculaRepository;
 import com.InAula.InAula.repository.ProfessorRepository;
+import com.InAula.InAula.service.email.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +32,10 @@ public class ProfessorService {
     private final ProfessorRepository professorRepository;
     private final MateriaRepository materiaRepository;
     private final PasswordEncoder passwordEncoder;
+
+    private final AulaRepository aulaRepository;
+    private final MatriculaRepository matriculaRepository;
+    private final EmailService emailService;
 
     // mesmo padrão do aluno onde estão as fotos
     private final String DIRETORIO_FOTOS = "C:\\Users\\Glêisson\\Pictures\\fotosInAula";
@@ -69,15 +76,51 @@ public class ProfessorService {
 
 
 
-    // DELETAR PROFESSOR
+    @Transactional
     public void deletarProfessor(Long id) {
 
-        if (!professorRepository.existsById(id)) {
-            throw new ResourceNotFoundException(
-                    "Professor não encontrado para exclusão");
+        Professor professor = professorRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Professor não encontrado para exclusão"));
+
+        // Cópia da lista de aulas (evita ConcurrentModificationException ao remover)
+        List<Aula> aulas = new ArrayList<>(professor.getAulas());
+
+        for (Aula aula : aulas) {
+
+            // Notifica os alunos com matrícula ACEITA nessa aula
+            List<Matricula> matriculasAceitas =
+                    matriculaRepository.findByAula_IdAndStatus(aula.getId(), MatriculaStatus.ACEITA);
+
+            for (Matricula matricula : matriculasAceitas) {
+                try {
+                    emailService.enviarExclusaoContaProfessorParaAluno(matricula);
+                } catch (Exception e) {
+                    System.err.println("Falha ao enviar e-mail de cancelamento para "
+                            + matricula.getAluno().getEmail() + ": " + e.getMessage());
+                }
+            }
+
+            // Remove TODAS as matrículas dessa aula (qualquer status), para não violar FK
+            List<Matricula> todasMatriculas = matriculaRepository.findByAula_Id(aula.getId());
+            matriculaRepository.deleteAll(todasMatriculas);
+
+            aulaRepository.delete(aula);
         }
 
-        professorRepository.deleteById(id);
+        // Remove vínculo do professor com as matérias (ManyToMany)
+        List<Materia> materias = new ArrayList<>(professor.getMaterias());
+        for (Materia materia : materias) {
+            materia.getProfessores().remove(professor);
+            professor.getMaterias().remove(materia);
+
+            // Se a matéria não tiver mais nenhum professor vinculado, apaga
+            if (materia.getProfessores().isEmpty()) {
+                materiaRepository.delete(materia);
+            }
+        }
+
+        professorRepository.delete(professor);
     }
 
 

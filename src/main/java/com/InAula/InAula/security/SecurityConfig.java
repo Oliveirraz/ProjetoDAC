@@ -103,6 +103,7 @@ public class SecurityConfig {
                         // MATRICULAR
                         .requestMatchers(HttpMethod.GET, "/api/matriculas/responder").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/matriculas/aulas/*/solicitar").hasRole("ALUNO")
+                        .requestMatchers(HttpMethod.DELETE, "/api/matriculas/aulas/*/cancelar").hasRole("ALUNO")
 
                         .anyRequest().authenticated()
                 )

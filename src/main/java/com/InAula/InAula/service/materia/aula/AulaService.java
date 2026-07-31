@@ -2,16 +2,11 @@ package com.InAula.InAula.service.materia.aula;
 
 import com.InAula.InAula.RequestDTO.AulaRequestDTO;
 import com.InAula.InAula.ResponseDTO.AulaResponseDTO;
-import com.InAula.InAula.entity.Aluno;
-import com.InAula.InAula.entity.Aula;
-import com.InAula.InAula.entity.Materia;
-import com.InAula.InAula.entity.Professor;
+import com.InAula.InAula.entity.*;
 import com.InAula.InAula.exception.ResourceNotFoundException;
 import com.InAula.InAula.mapper.AulaMapper;
-import com.InAula.InAula.repository.AlunoRepository;
-import com.InAula.InAula.repository.AulaRepository;
-import com.InAula.InAula.repository.MateriaRepository;
-import com.InAula.InAula.repository.ProfessorRepository;
+import com.InAula.InAula.repository.*;
+import com.InAula.InAula.service.email.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.Authentication;
@@ -20,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,6 +29,8 @@ public class AulaService {
     private final ProfessorRepository professorRepository;
     private final MateriaRepository materiaRepository;
     private final AlunoRepository alunoRepository;
+    private final MatriculaRepository matriculaRepository;
+    private final EmailService emailService;
 
 
     private Professor getProfessorLogado() {
@@ -204,6 +202,36 @@ public class AulaService {
             throw new IllegalArgumentException(
                     "Você não pode deletar esta aula");
         }
+
+        aulaRepository.delete(aula);
+    }
+
+    // Cancelar Aula
+    @Transactional
+    public void cancelarAulaProfessorLogado(Long aulaId) {
+
+        Professor professor = getProfessorLogado();
+
+        Aula aula = aulaRepository.findById(aulaId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Aula não encontrada com ID: " + aulaId));
+
+        if (!aula.getProfessor().getId().equals(professor.getId())) {
+            throw new IllegalArgumentException("Você não pode cancelar esta aula");
+        }
+
+        // Notifica por e-mail apenas os alunos com matrícula ACEITA
+        List<Matricula> matriculasAceitas =
+                matriculaRepository.findByAula_IdAndStatus(aulaId, MatriculaStatus.ACEITA);
+
+        for (Matricula matricula : matriculasAceitas) {
+            emailService.enviarCancelamentoAulaParaAluno(matricula);
+        }
+
+        // Remove TODAS as matrículas ligadas a essa aula (qualquer status),
+        // para não violar a FK ao deletar a aula
+        List<Matricula> todasMatriculas = matriculaRepository.findByAula_Id(aulaId);
+        matriculaRepository.deleteAll(todasMatriculas);
 
         aulaRepository.delete(aula);
     }

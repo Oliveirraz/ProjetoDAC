@@ -4,12 +4,12 @@ import com.InAula.InAula.RequestDTO.AlunoRequestDTO;
 import com.InAula.InAula.RequestDTO.LoginRequestDTO;
 import com.InAula.InAula.ResponseDTO.AlunoResponseDTO;
 import com.InAula.InAula.ResponseDTO.MateriaResponseDTO;
-import com.InAula.InAula.entity.Aluno;
-import com.InAula.InAula.entity.Aula;
-import com.InAula.InAula.entity.Materia;
+import com.InAula.InAula.entity.*;
 import com.InAula.InAula.exception.ResourceNotFoundException;
 import com.InAula.InAula.repository.AlunoRepository;
 import com.InAula.InAula.repository.MateriaRepository;
+import com.InAula.InAula.repository.MatriculaRepository;
+import com.InAula.InAula.service.email.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,6 +29,10 @@ public class AlunoService {
 
     // Usado para criptografar senha (padrão da apostila)
     private final PasswordEncoder passwordEncoder;
+
+    private final MatriculaRepository matriculaRepository;
+
+    private final EmailService emailService;
 
     // Diretório físico para salvar fotos
     private static final String DIRETORIO_FOTOS =
@@ -166,13 +170,32 @@ public class AlunoService {
                         new ResourceNotFoundException("Aluno não encontrado")
                 );
 
-        // Remove vínculo com aulas
+        // Notifica os professores das aulas em que a matrícula estava ACEITA
+        List<Matricula> matriculasAceitas =
+                matriculaRepository.findByAluno_IdAndStatus(id, MatriculaStatus.ACEITA);
+
+        for (Matricula matricula : matriculasAceitas) {
+            try {
+                emailService.enviarExclusaoContaParaProfessor(matricula);
+            } catch (Exception e) {
+                // Não deixa falha de e-mail impedir a exclusão da conta
+                System.err.println("Falha ao enviar e-mail de exclusão de conta para o professor "
+                        + matricula.getAula().getProfessor().getEmail() + ": " + e.getMessage());
+            }
+        }
+
+        // Remove vínculo com aulas (ManyToMany aulas_alunos)
         if (aluno.getAulas() != null) {
             for (Aula aula : aluno.getAulas()) {
                 aula.getAlunos().remove(aluno);
             }
             aluno.getAulas().clear();
         }
+
+        // Remove todas as matrículas ligadas a esse aluno (qualquer status),
+        // para não violar a FK ao deletar o aluno
+        List<Matricula> matriculas = matriculaRepository.findByAluno_Id(id);
+        matriculaRepository.deleteAll(matriculas);
 
         alunoRepository.delete(aluno);
     }

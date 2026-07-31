@@ -99,5 +99,12 @@ public class AulaController {
         return ResponseEntity.ok(aulaService.listarAulasAlunoLogado());
     }
 
+    // Cancelar aula (avisa alunos matriculados por e-mail e apaga a aula)
+    @DeleteMapping("/professor/me/{id}/cancelar")
+    public ResponseEntity<Void> cancelarAulaProfessorLogado(@PathVariable Long id) {
+        aulaService.cancelarAulaProfessorLogado(id);
+        return ResponseEntity.noContent().build();
+    }
+
 
 }

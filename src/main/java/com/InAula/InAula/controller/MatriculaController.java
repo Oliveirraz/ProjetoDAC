@@ -38,4 +38,11 @@ public class MatriculaController {
 
         return ResponseEntity.ok(html);
     }
+
+    // Aluno logado cancela a própria matrícula (aceita) em uma aula
+    @DeleteMapping("/aulas/{aulaId}/cancelar")
+    public ResponseEntity<String> cancelar(@PathVariable Long aulaId) {
+        matriculaService.cancelarMatricula(aulaId);
+        return ResponseEntity.ok("Matrícula cancelada com sucesso. O professor foi notificado por e-mail.");
+    }
 }

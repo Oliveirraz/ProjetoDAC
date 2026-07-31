@@ -155,4 +155,130 @@ public class EmailService {
             throw new RuntimeException("Erro ao enviar e-mail para " + destinatario, e);
         }
     }
+
+    public void enviarCancelamentoParaProfessor(Matricula matricula) {
+
+        var aula = matricula.getAula();
+        var professor = aula.getProfessor();
+        var aluno = matricula.getAluno();
+
+        String texto = """
+            Olá, %s!
+
+            O aluno %s CANCELOU a matrícula na sua aula de %s.
+
+            Detalhes da aula:
+
+            Data: %s
+            Horário: %s às %s
+            Local: %s
+
+            A vaga foi liberada automaticamente.
+            """.formatted(
+                professor.getNome(),
+                aluno.getNome(),
+                aula.getMateria().getNome(),
+                aula.getData(),
+                aula.getHoraInicio(),
+                aula.getHoraFim(),
+                aula.getLocal()
+        );
+
+        enviar(professor.getEmail(), "EnAula - Cancelamento de matrícula", texto);
+    }
+
+    public void enviarCancelamentoAulaParaAluno(Matricula matricula) {
+
+        var aula = matricula.getAula();
+        var aluno = matricula.getAluno();
+        var professor = aula.getProfessor();
+
+        String texto = """
+            Olá, %s!
+
+            O professor %s CANCELOU a aula de %s em que você estava matriculado.
+
+            Detalhes da aula cancelada:
+
+            Data: %s
+            Horário: %s às %s
+            Local: %s
+
+            Sentimos muito pelo inconveniente. Você pode buscar outras aulas disponíveis na plataforma.
+            """.formatted(
+                aluno.getNome(),
+                professor.getNome(),
+                aula.getMateria().getNome(),
+                aula.getData(),
+                aula.getHoraInicio(),
+                aula.getHoraFim(),
+                aula.getLocal()
+        );
+
+        enviar(aluno.getEmail(), "EnAula - Aula cancelada pelo professor", texto);
+    }
+
+    public void enviarExclusaoContaParaProfessor(Matricula matricula) {
+
+        var aula = matricula.getAula();
+        var professor = aula.getProfessor();
+        var aluno = matricula.getAluno();
+
+        String texto = """
+            Olá, %s!
+
+            O aluno %s EXCLUIU sua conta na plataforma e, por isso,
+            a matrícula dele na sua aula de %s foi cancelada automaticamente.
+
+            Detalhes da aula:
+
+            Data: %s
+            Horário: %s às %s
+            Local: %s
+
+            A vaga foi liberada automaticamente.
+            """.formatted(
+                professor.getNome(),
+                aluno.getNome(),
+                aula.getMateria().getNome(),
+                aula.getData(),
+                aula.getHoraInicio(),
+                aula.getHoraFim(),
+                aula.getLocal()
+        );
+
+        enviar(professor.getEmail(), "EnAula - Aluno excluiu a conta e cancelou matrícula", texto);
+    }
+
+    public void enviarExclusaoContaProfessorParaAluno(Matricula matricula) {
+
+        var aula = matricula.getAula();
+        var aluno = matricula.getAluno();
+        var professor = aula.getProfessor();
+
+        String texto = """
+            Olá, %s!
+
+            O professor %s excluiu sua conta na plataforma e, por isso,
+            a aula de %s em que você estava matriculado foi cancelada.
+
+            Detalhes da aula cancelada:
+
+            Data: %s
+            Horário: %s às %s
+            Local: %s
+
+            Sentimos muito pelo inconveniente. Você pode buscar outras aulas disponíveis na plataforma.
+            """.formatted(
+                aluno.getNome(),
+                professor.getNome(),
+                aula.getMateria().getNome(),
+                aula.getData(),
+                aula.getHoraInicio(),
+                aula.getHoraFim(),
+                aula.getLocal()
+        );
+
+        enviar(aluno.getEmail(), "EnAula - Professor excluiu a conta e a aula foi cancelada", texto);
+    }
 }
