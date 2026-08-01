@@ -11,7 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.InAula.InAula.ResponseDTO.AlunoResponseDTO;
 import java.util.List;
 
 @CrossOrigin(origins = "*")
@@ -103,6 +103,24 @@ public class AulaController {
     @DeleteMapping("/professor/me/{id}/cancelar")
     public ResponseEntity<Void> cancelarAulaProfessorLogado(@PathVariable Long id) {
         aulaService.cancelarAulaProfessorLogado(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Listar alunos matriculados numa aula do professor logado
+    @GetMapping("/professor/me/{id}/alunos")
+    public ResponseEntity<List<AlunoResponseDTO>> listarAlunosDaAula(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(aulaService.listarAlunosDaAula(id));
+    }
+
+    // Remover um aluno de uma aula do professor logado
+    @DeleteMapping("/professor/me/{aulaId}/alunos/{alunoId}")
+    public ResponseEntity<Void> removerAlunoDaAula(
+            @PathVariable Long aulaId,
+            @PathVariable Long alunoId) {
+
+        aulaService.removerAlunoDaAula(aulaId, alunoId);
         return ResponseEntity.noContent().build();
     }
 

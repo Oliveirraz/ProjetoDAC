@@ -281,4 +281,102 @@ public class EmailService {
 
         enviar(aluno.getEmail(), "EnAula - Professor excluiu a conta e a aula foi cancelada", texto);
     }
+
+    public void enviarRemocaoAlunoParaAluno(Matricula matricula) {
+
+        var aula = matricula.getAula();
+        var aluno = matricula.getAluno();
+        var professor = aula.getProfessor();
+
+        String texto = """
+            Olá, %s!
+
+            Você foi removido(a) da aula de %s pelo professor %s.
+
+            Detalhes da aula:
+
+            Data: %s
+            Horário: %s às %s
+            Local: %s
+
+            A vaga foi liberada. Você pode buscar outras aulas disponíveis na plataforma.
+            """.formatted(
+                aluno.getNome(),
+                aula.getMateria().getNome(),
+                professor.getNome(),
+                aula.getData(),
+                aula.getHoraInicio(),
+                aula.getHoraFim(),
+                aula.getLocal()
+        );
+
+        enviar(aluno.getEmail(), "EnAula - Você foi removido da aula", texto);
+    }
+
+    public void enviarExclusaoAulaParaAluno(Matricula matricula) {
+
+        var aula = matricula.getAula();
+        var aluno = matricula.getAluno();
+        var professor = aula.getProfessor();
+
+        String texto = """
+            Olá, %s!
+
+            A aula de %s em que você estava matriculado(a) foi EXCLUÍDA pelo professor %s.
+
+            Detalhes da aula excluída:
+
+            Data: %s
+            Horário: %s às %s
+            Local: %s
+
+            Sentimos muito pelo inconveniente. Você pode buscar outras aulas disponíveis na plataforma.
+            """.formatted(
+                aluno.getNome(),
+                aula.getMateria().getNome(),
+                professor.getNome(),
+                aula.getData(),
+                aula.getHoraInicio(),
+                aula.getHoraFim(),
+                aula.getLocal()
+        );
+
+        enviar(aluno.getEmail(), "EnAula - Aula excluída pelo professor", texto);
+    }
+
+    public void enviarAtualizacaoAulaParaAluno(Matricula matricula, String alteracoes) {
+
+        var aula = matricula.getAula();
+        var aluno = matricula.getAluno();
+        var professor = aula.getProfessor();
+
+        String texto = """
+            Olá, %s!
+
+            O professor %s atualizou informações da aula de %s em que você está matriculado(a).
+
+            O que mudou:
+            %s
+            Novos detalhes da aula:
+
+            Data: %s
+            Horário: %s às %s
+            Local: %s
+            Valor: R$ %s
+
+            Se tiver dúvidas, entre em contato com o professor.
+            """.formatted(
+                aluno.getNome(),
+                professor.getNome(),
+                aula.getMateria().getNome(),
+                alteracoes,
+                aula.getData(),
+                aula.getHoraInicio(),
+                aula.getHoraFim(),
+                aula.getLocal(),
+                aula.getValorHora()
+        );
+
+        enviar(aluno.getEmail(), "EnAula - Atualização na sua aula", texto);
+    }
 }

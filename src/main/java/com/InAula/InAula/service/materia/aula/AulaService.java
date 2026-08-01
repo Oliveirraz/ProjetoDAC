@@ -13,11 +13,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.InAula.InAula.ResponseDTO.AlunoResponseDTO;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Service
 @RequiredArgsConstructor
@@ -156,6 +158,13 @@ public class AulaService {
 
         validarHorarioAtualizacao(aula, dto);
 
+        // Guarda os valores antigos para comparar depois e montar o e-mail de aviso
+        LocalDate dataAntiga = aula.getData();
+        LocalTime horaInicioAntiga = aula.getHoraInicio();
+        LocalTime horaFimAntiga = aula.getHoraFim();
+        String localAntigo = aula.getLocal();
+        BigDecimal valorHoraAntigo = aula.getValorHora();
+
         if (dto.getData() != null) aula.setData(dto.getData());
         if (dto.getHoraInicio() != null) aula.setHoraInicio(dto.getHoraInicio());
         if (dto.getHoraFim() != null) aula.setHoraFim(dto.getHoraFim());
@@ -179,12 +188,67 @@ public class AulaService {
             validarCapacidade(alunos.size(), aula.getCapacidadeMaxima());
             aula.setAlunos(alunos);
         }
-        // adicione junto com os outros ifs de atualização:
+
         if (dto.getValorHora() != null) {
             aula.setValorHora(dto.getValorHora());
         }
 
-        return AulaMapper.toResponseDto(aulaRepository.save(aula));
+        Aula aulaAtualizada = aulaRepository.save(aula);
+
+        // Monta o texto com o que mudou e notifica os alunos matriculados (ACEITA)
+        String alteracoes = montarTextoAlteracoes(
+                dataAntiga, horaInicioAntiga, horaFimAntiga, localAntigo, valorHoraAntigo,
+                aulaAtualizada
+        );
+
+        if (alteracoes != null) {
+            List<Matricula> matriculasAceitas =
+                    matriculaRepository.findByAula_IdAndStatus(aulaId, MatriculaStatus.ACEITA);
+
+            for (Matricula matricula : matriculasAceitas) {
+                emailService.enviarAtualizacaoAulaParaAluno(matricula, alteracoes);
+            }
+        }
+
+        return AulaMapper.toResponseDto(aulaAtualizada);
+    }
+
+    // Compara os valores antigos com os novos e monta o texto de alterações
+    // (retorna null se nada relevante mudou, pra não disparar e-mail à toa)
+    private String montarTextoAlteracoes(
+            LocalDate dataAntiga,
+            LocalTime horaInicioAntiga,
+            LocalTime horaFimAntiga,
+            String localAntigo,
+            BigDecimal valorHoraAntigo,
+            Aula aulaAtualizada
+    ) {
+        StringBuilder sb = new StringBuilder();
+
+        if (!dataAntiga.equals(aulaAtualizada.getData())) {
+            sb.append("- Data: ").append(dataAntiga)
+                    .append(" → ").append(aulaAtualizada.getData()).append("\n");
+        }
+
+        if (!horaInicioAntiga.equals(aulaAtualizada.getHoraInicio())
+                || !horaFimAntiga.equals(aulaAtualizada.getHoraFim())) {
+            sb.append("- Horário: ").append(horaInicioAntiga).append(" às ").append(horaFimAntiga)
+                    .append(" → ").append(aulaAtualizada.getHoraInicio())
+                    .append(" às ").append(aulaAtualizada.getHoraFim()).append("\n");
+        }
+
+        if (!localAntigo.equals(aulaAtualizada.getLocal())) {
+            sb.append("- Local: ").append(localAntigo)
+                    .append(" → ").append(aulaAtualizada.getLocal()).append("\n");
+        }
+
+        if (valorHoraAntigo != null && aulaAtualizada.getValorHora() != null
+                && valorHoraAntigo.compareTo(aulaAtualizada.getValorHora()) != 0) {
+            sb.append("- Valor: R$ ").append(valorHoraAntigo)
+                    .append(" → R$ ").append(aulaAtualizada.getValorHora()).append("\n");
+        }
+
+        return sb.length() == 0 ? null : sb.toString();
     }
 
 
@@ -202,6 +266,19 @@ public class AulaService {
             throw new IllegalArgumentException(
                     "Você não pode deletar esta aula");
         }
+
+        // Notifica por e-mail apenas os alunos com matrícula ACEITA
+        List<Matricula> matriculasAceitas =
+                matriculaRepository.findByAula_IdAndStatus(aulaId, MatriculaStatus.ACEITA);
+
+        for (Matricula matricula : matriculasAceitas) {
+            emailService.enviarExclusaoAulaParaAluno(matricula);
+        }
+
+        // Remove todas as matrículas ligadas a essa aula (qualquer status),
+        // para não violar a FK ao deletar a aula
+        List<Matricula> todasMatriculas = matriculaRepository.findByAula_Id(aulaId);
+        matriculaRepository.deleteAll(todasMatriculas);
 
         aulaRepository.delete(aula);
     }
@@ -406,6 +483,88 @@ public class AulaService {
                 .stream()
                 .map(AulaMapper::toResponseDto)
                 .collect(Collectors.toList());
+    }
+
+    // Listar alunos matriculados numa aula do professor logado
+    @Transactional(readOnly = true)
+    public List<AlunoResponseDTO> listarAlunosDaAula(Long aulaId) {
+
+        Professor professor = getProfessorLogado();
+
+        Aula aula = aulaRepository.findById(aulaId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Aula não encontrada com ID: " + aulaId));
+
+        if (!aula.getProfessor().getId().equals(professor.getId())) {
+            throw new IllegalArgumentException(
+                    "Você não tem permissão para acessar esta aula");
+        }
+
+        return aula.getAlunos()
+                .stream()
+                .map(this::toAlunoResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Remover um aluno de uma aula do professor logado
+    @Transactional
+    public void removerAlunoDaAula(Long aulaId, Long alunoId) {
+
+        Professor professor = getProfessorLogado();
+
+        Aula aula = aulaRepository.findById(aulaId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Aula não encontrada com ID: " + aulaId));
+
+        if (!aula.getProfessor().getId().equals(professor.getId())) {
+            throw new IllegalArgumentException(
+                    "Você não pode remover alunos desta aula");
+        }
+
+        Aluno aluno = alunoRepository.findById(alunoId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Aluno não encontrado com ID: " + alunoId));
+
+        if (!aula.getAlunos().contains(aluno)) {
+            throw new IllegalArgumentException(
+                    "Este aluno não está matriculado nesta aula");
+        }
+
+        // Remove o vínculo (libera a vaga)
+        aula.getAlunos().remove(aluno);
+        aulaRepository.save(aula);
+
+        // Atualiza a matrícula ACEITA correspondente e avisa o aluno por e-mail
+        matriculaRepository
+                .findByAluno_IdAndAula_IdAndStatus(alunoId, aulaId, MatriculaStatus.ACEITA)
+                .ifPresent(matricula -> {
+                    matricula.setStatus(MatriculaStatus.CANCELADA);
+                    matricula.setDataResposta(LocalDateTime.now());
+                    matriculaRepository.save(matricula);
+
+                    emailService.enviarRemocaoAlunoParaAluno(matricula);
+                });
+    }
+
+    private AlunoResponseDTO toAlunoResponseDTO(Aluno aluno) {
+
+        List<Long> aulasIds = aluno.getAulas()
+                .stream()
+                .map(Aula::getId)
+                .toList();
+
+        return new AlunoResponseDTO(
+                aluno.getId(),
+                aluno.getNome(),
+                aluno.getEmail(),
+                aluno.getFoto() != null
+                        ? "http://localhost:8080/uploads/" + aluno.getFoto()
+                        : null,
+                aulasIds
+        );
     }
 
 }

@@ -67,11 +67,16 @@ public class AlunoController {
         );
     }
 
-
     @DeleteMapping("/me")
     public void deletarMinhaConta(Authentication authentication) {
         Aluno aluno = (Aluno) authentication.getPrincipal();
         alunoService.deletarAluno(aluno.getId());
+    }
+
+    // Usado pelo professor para visualizar o perfil de um aluno
+    @GetMapping("/{id}")
+    public AlunoResponseDTO buscarAlunoPorId(@PathVariable Long id) {
+        return alunoService.buscarAlunoPorId(id);
     }
 
 }

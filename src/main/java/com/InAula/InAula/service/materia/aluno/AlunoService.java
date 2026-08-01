@@ -199,5 +199,15 @@ public class AlunoService {
 
         alunoRepository.delete(aluno);
     }
+
+    // Usado pelo professor para visualizar o perfil de um aluno
+    @Transactional(readOnly = true)
+    public AlunoResponseDTO buscarAlunoPorId(Long id) {
+
+        Aluno aluno = alunoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Aluno não encontrado"));
+
+        return toResponseDTO(aluno);
+    }
 }
 

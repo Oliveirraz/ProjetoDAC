@@ -90,6 +90,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/alunos/me").hasRole("ALUNO")
                         .requestMatchers(HttpMethod.POST, "/api/aulas/*/matricular").hasRole("ALUNO")
                         .requestMatchers(HttpMethod.GET, "/api/aulas/aluno").hasRole("ALUNO")
+                        .requestMatchers(HttpMethod.GET, "/api/alunos/*").hasRole("PROFESSOR")
                         // AULAS
                         .requestMatchers(HttpMethod.POST, "/api/aulas").hasRole("PROFESSOR")
                         .requestMatchers(HttpMethod.PUT, "/api/aulas/**").hasRole("PROFESSOR")
